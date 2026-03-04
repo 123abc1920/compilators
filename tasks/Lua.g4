@@ -13,11 +13,13 @@ forStmt: 'for' NAME '=' expr ',' expr 'do' (statement)* 'end';
 
 whileStmt: 'while' expr 'do' (statement)* 'end';
 
-expr: notExpr;
+expr: orExpr;
 
-notExpr: 'not' notExpr | andExpr;
+orExpr: andExpr ('or' andExpr)*;
 
-andExpr: comparison ('and' comparison)*;
+andExpr: notExpr ('and' notExpr)*;
+
+notExpr: 'not' notExpr | comparison;
 
 comparison: addExpr (('<' | '>' | '<=' | '>=' | '==' | '~=') addExpr)*;
 
