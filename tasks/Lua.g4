@@ -5,6 +5,7 @@ prog: (statement)* EOF;
 statement: assign
          | expr
          | forStmt
+         | whileStmt
          ;
 
 assign: NAME '=' expr;

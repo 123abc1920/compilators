@@ -22,6 +22,8 @@ class Compilator(LuaVisitor):
             return self.visit(ctx.assign())
         if ctx.forStmt():
             return self.visit(ctx.forStmt())
+        if ctx.whileStmt():
+            return self.visit(ctx.whileStmt())
         return None
 
     def visitAssign(self, ctx):
@@ -35,26 +37,34 @@ class Compilator(LuaVisitor):
         start = int(self.visit(ctx.expr(0)))
         end = int(self.visit(ctx.expr(1)))
 
-        last_result = None
+        result = None
         for i in range(start, end):
             self.vars[var_name] = i
             for stmt in ctx.statement():
-                last_result = self.visit(stmt)
+                result = self.visit(stmt)
 
-        return last_result
+        return result
 
     def visitWhileStmt(self, ctx):
-        return self.visitChildren(ctx)
+        result = None
+
+        while self.visit(ctx.expr()):
+            for stmt in ctx.statement():
+                result = self.visit(stmt)
+
+        return result
 
     def visitExpr(self, ctx):
-        return self.visitChildren(ctx)
+        return self.visit(ctx.orExpr())
 
     def visitOrExpr(self, ctx):
         left = self.visit(ctx.andExpr(0))
         result = left
+
         for i in range(1, len(ctx.andExpr())):
             right = self.visit(ctx.andExpr(i))
             result = result or right
+
         return result
 
     def visitNotExpr(self, ctx):
@@ -65,10 +75,12 @@ class Compilator(LuaVisitor):
 
     def visitAndExpr(self, ctx):
         left = self.visit(ctx.notExpr(0))
+
         result = left
         for i in range(1, len(ctx.notExpr())):
             right = self.visit(ctx.notExpr(i))
             result = result and right
+
         return result
 
     def visitComparison(self, ctx):
@@ -127,7 +139,13 @@ class Compilator(LuaVisitor):
 
 
 code = """
-    3>5 or 2>3 or 1>5
+    a=0
+    b=0
+    while not a>6 do
+        a=a+1
+        b=b+1
+    end
+    a
 """
 
 lexer = LuaLexer(InputStream(code))
