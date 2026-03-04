@@ -11,7 +11,15 @@ assign: NAME '=' expr;
 
 forStmt: 'for' NAME '=' expr ',' expr 'do' (statement)* 'end';
 
-expr: addExpr;
+whileStmt: 'while' expr 'do' (statement)* 'end';
+
+expr: notExpr;
+
+notExpr: 'not' notExpr | andExpr;
+
+andExpr: comparison ('and' comparison)*;
+
+comparison: addExpr (('<' | '>' | '<=' | '>=' | '==' | '~=') addExpr)*;
 
 addExpr: mulExpr (('+' | '-') mulExpr)*;
 

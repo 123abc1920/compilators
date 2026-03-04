@@ -43,6 +43,38 @@ class Compilator(LuaVisitor):
 
         return last_result
 
+    def visitWhileStmt(self, ctx):
+        return self.visitChildren(ctx)
+
+    def visitExpr(self, ctx):
+        return self.visitChildren(ctx)
+
+    def visitNotExpr(self, ctx):
+        return self.visitChildren(ctx)
+
+    def visitAndExpr(self, ctx):
+        return self.visitChildren(ctx)
+
+    def visitComparison(self, ctx):
+        left = self.visit(ctx.addExpr(0))
+        if ctx.getChildCount() == 1:
+            return left
+        op = ctx.getChild(1).getText()
+        right = self.visit(ctx.addExpr(1))
+
+        if op == "<":
+            return left < right
+        elif op == ">":
+            return left > right
+        elif op == "<=":
+            return left <= right
+        elif op == ">=":
+            return left >= right
+        elif op == "==":
+            return left == right
+        elif op == "~=":
+            return left != right
+
     def visitAtom(self, ctx):
         if ctx.NUMBER():
             return int(ctx.NUMBER().getText())
@@ -79,11 +111,7 @@ class Compilator(LuaVisitor):
 
 
 code = """
-    a=0
-    for i=1, 10 do
-        a=a+1
-    end
-    i
+    3<=5
 """
 
 lexer = LuaLexer(InputStream(code))
