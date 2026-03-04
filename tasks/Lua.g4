@@ -4,9 +4,12 @@ prog: (statement)* EOF;
 
 statement: assign
          | expr
+         | forStmt
          ;
 
 assign: NAME '=' expr;
+
+forStmt: 'for' NAME '=' expr ',' expr 'do' (statement)* 'end';
 
 expr: addExpr;
 

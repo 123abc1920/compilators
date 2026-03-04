@@ -20,6 +20,8 @@ class Compilator(LuaVisitor):
             return self.visit(ctx.expr())
         if ctx.assign():
             return self.visit(ctx.assign())
+        if ctx.forStmt():
+            return self.visit(ctx.forStmt())
         return None
 
     def visitAssign(self, ctx):
@@ -27,6 +29,19 @@ class Compilator(LuaVisitor):
         value = self.visit(ctx.expr())
         self.vars[name] = value
         return value
+
+    def visitForStmt(self, ctx):
+        var_name = ctx.NAME().getText()
+        start = int(self.visit(ctx.expr(0)))
+        end = int(self.visit(ctx.expr(1)))
+
+        last_result = None
+        for i in range(start, end):
+            self.vars[var_name] = i
+            for stmt in ctx.statement():
+                last_result = self.visit(stmt)
+
+        return last_result
 
     def visitAtom(self, ctx):
         if ctx.NUMBER():
@@ -64,9 +79,11 @@ class Compilator(LuaVisitor):
 
 
 code = """
-    a=1
-    b=a+5
-    b-3
+    a=0
+    for i=1, 10 do
+        a=a+1
+    end
+    i
 """
 
 lexer = LuaLexer(InputStream(code))
