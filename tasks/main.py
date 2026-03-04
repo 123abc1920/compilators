@@ -50,7 +50,12 @@ class Compilator(LuaVisitor):
         return self.visitChildren(ctx)
 
     def visitOrExpr(self, ctx):
-        return self.visitChildren(ctx)
+        left = self.visit(ctx.andExpr(0))
+        result = left
+        for i in range(1, len(ctx.andExpr())):
+            right = self.visit(ctx.andExpr(i))
+            result = result or right
+        return result
 
     def visitNotExpr(self, ctx):
         if ctx.notExpr():
@@ -122,7 +127,7 @@ class Compilator(LuaVisitor):
 
 
 code = """
-    3<5 and 2<3 and 1>5
+    3>5 or 2>3 or 1>5
 """
 
 lexer = LuaLexer(InputStream(code))
