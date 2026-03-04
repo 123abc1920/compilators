@@ -1,6 +1,12 @@
 grammar Lua;
 
-prog: (expr)* EOF;
+prog: (statement)* EOF;
+
+statement: assign
+         | expr
+         ;
+
+assign: NAME '=' expr;
 
 expr: addExpr;
 

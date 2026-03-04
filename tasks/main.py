@@ -5,13 +5,37 @@ from LuaVisitor import LuaVisitor
 
 
 class Compilator(LuaVisitor):
+    def __init__(self):
+        self.vars = {}
+
+    def visitProg(self, ctx):
+        results = []
+        for stmt in ctx.statement():
+            res = self.visit(stmt)
+            results.append(res)
+        return results[-1] if results else None
+
+    def visitStatement(self, ctx):
+        if ctx.expr():
+            return self.visit(ctx.expr())
+        if ctx.assign():
+            return self.visit(ctx.assign())
+        return None
+
+    def visitAssign(self, ctx):
+        name = ctx.NAME().getText()
+        value = self.visit(ctx.expr())
+        self.vars[name] = value
+        return value
+
     def visitAtom(self, ctx):
         if ctx.NUMBER():
             return int(ctx.NUMBER().getText())
         if ctx.STRING():
             return ctx.STRING().getText()[1:-1]
         if ctx.NAME():
-            return 0
+            name = ctx.NAME().getText()
+            return self.vars.get(name, 0)
         if ctx.expr():
             return self.visit(ctx.expr())
         return 0
@@ -39,18 +63,20 @@ class Compilator(LuaVisitor):
         return result
 
 
-code = "6*4/2"
+code = """
+    a=1
+    b=a+5
+    b-3
+"""
 
 lexer = LuaLexer(InputStream(code))
 stream = CommonTokenStream(lexer)
 parser = LuaParser(stream)
-tree = parser.expr()
+tree = parser.prog()
 
 evaluator = Compilator()
 result = evaluator.visit(tree)
 print(result)
-
-tree = parser.prog()
 
 print("Дерево разбора:")
 print(tree.toStringTree(recog=parser))
