@@ -90,6 +90,12 @@ class Compilator(LuaVisitor):
         return result
 
     def visitExpr(self, ctx):
+        if ctx.getText() == "true":
+            return True
+        if ctx.getText() == "false":
+            return False
+        if ctx.getText() == "nil":
+            return None
         return self.visit(ctx.orExpr())
 
     def visitOrExpr(self, ctx):
@@ -148,6 +154,13 @@ class Compilator(LuaVisitor):
             return self.vars.get(name, 0)
         if ctx.expr():
             return self.visit(ctx.expr())
+        if ctx.atom():
+            if ctx.getChild(0).getText() == "-":
+                return -self.visit(ctx.atom())
+        if ctx.boolAtom():
+            return self.visit(ctx.boolAtom())
+        if ctx.nilAtom():
+            return self.visit(ctx.nilAtom())
         return 0
 
     def visitMulExpr(self, ctx):
@@ -174,11 +187,12 @@ class Compilator(LuaVisitor):
 
 
 code = """
-    a=3
-    repeat
-        a=a+1
-    until a>7
-    a
+    a=false
+    b=0
+    if not a then
+        b=10
+    end
+    b
 """
 
 lexer = LuaLexer(InputStream(code))
