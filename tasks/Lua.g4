@@ -6,6 +6,7 @@ statement: assign
          | expr
          | forStmt
          | whileStmt
+         | repeatStmt
          | ifStmt
          ;
 
@@ -14,6 +15,8 @@ assign: NAME '=' expr;
 ifStmt: 'if' expr 'then' (statement)* ('elseif' expr 'then' (statement)*)* ('else' (statement)*)? 'end';
 
 forStmt: 'for' NAME '=' expr ',' expr 'do' (statement)* 'end';
+
+repeatStmt: 'repeat' (statement)* 'until' expr;
 
 whileStmt: 'while' expr 'do' (statement)* 'end';
 

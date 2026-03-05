@@ -24,6 +24,8 @@ class Compilator(LuaVisitor):
             return self.visit(ctx.forStmt())
         if ctx.whileStmt():
             return self.visit(ctx.whileStmt())
+        if ctx.repeatStmt():
+            return self.visit(ctx.repeatStmt())
         if ctx.ifStmt():
             return self.visit(ctx.ifStmt())
         return None
@@ -62,6 +64,19 @@ class Compilator(LuaVisitor):
         if len(statements) > len(exprs):
             for stmt in statements[-1].getChildren():
                 result = self.visit(stmt)
+
+        return result
+
+    def visitRepeatStmt(self, ctx):
+        statements = ctx.statement()
+        exprs = ctx.expr()
+        result = None
+
+        while True:
+            for s in statements:
+                result = self.visit(s)
+            if self.visit(exprs):
+                break
 
         return result
 
@@ -160,16 +175,9 @@ class Compilator(LuaVisitor):
 
 code = """
     a=3
-    b=6
-    if a>0 and b>12 then
-        a=a+50
-    elseif b>6 then
-        a=a+7
-    elseif b>3 or a>5 then
-        a=89
-    else
-        a=24
-    end
+    repeat
+        a=a+1
+    until a>7
     a
 """
 
