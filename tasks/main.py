@@ -24,6 +24,8 @@ class Compilator(LuaVisitor):
             return self.visit(ctx.forStmt())
         if ctx.whileStmt():
             return self.visit(ctx.whileStmt())
+        if ctx.ifStmt():
+            return self.visit(ctx.ifStmt())
         return None
 
     def visitAssign(self, ctx):
@@ -41,6 +43,24 @@ class Compilator(LuaVisitor):
         for i in range(start, end):
             self.vars[var_name] = i
             for stmt in ctx.statement():
+                result = self.visit(stmt)
+
+        return result
+
+    def visitIfStmt(self, ctx):
+        result = None
+
+        exprs = ctx.expr()
+        statements = ctx.statement()
+
+        for i in range(len(exprs)):
+            if self.visit(exprs[i]):
+                for s in statements[i].getChildren():
+                    result = self.visit(s)
+                return result
+
+        if len(statements) > len(exprs):
+            for stmt in statements[-1].getChildren():
                 result = self.visit(stmt)
 
         return result
@@ -139,11 +159,16 @@ class Compilator(LuaVisitor):
 
 
 code = """
-    a=0
-    b=0
-    while not a>6 do
-        a=a+1
-        b=b+1
+    a=3
+    b=6
+    if a>0 and b>12 then
+        a=a+50
+    elseif b>6 then
+        a=a+7
+    elseif b>3 or a>5 then
+        a=89
+    else
+        a=24
     end
     a
 """
