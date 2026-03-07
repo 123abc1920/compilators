@@ -9,11 +9,14 @@ statement: assign
          | repeatStmt
          | ifStmt
          | breakStmt
+         | continueStmt
          ;
 
 assign: NAME '=' expr;
 
 breakStmt: 'break';
+
+continueStmt: 'continue';
 
 ifStmt: 'if' expr 'then' (statement)* ('elseif' expr 'then' (statement)*)* ('else' (statement)*)? 'end';
 

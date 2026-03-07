@@ -26,6 +26,9 @@ class Compilator(LuaVisitor):
     def visitBreakStmt(self, ctx):
         raise BreakException()
 
+    def visitContinueStmt(self, ctx):
+        raise ContinueException()
+
     def visitStatement(self, ctx):
         if ctx.expr():
             return self.visit(ctx.expr())
@@ -41,6 +44,8 @@ class Compilator(LuaVisitor):
             return self.visit(ctx.ifStmt())
         if ctx.breakStmt():
             return self.visit(ctx.breakStmt())
+        if ctx.continueStmt():
+            return self.visit(ctx.continueStmt())
         return None
 
     def visitAssign(self, ctx):
@@ -63,6 +68,8 @@ class Compilator(LuaVisitor):
                         result = self.visit(stmt)
                 except BreakException:
                     break
+                except ContinueException:
+                    continue
         except BreakException:
             return result
 
@@ -98,6 +105,8 @@ class Compilator(LuaVisitor):
                         result = self.visit(s)
                 except BreakException:
                     break
+                except ContinueException:
+                    continue
                 if self.visit(exprs):
                     break
         except BreakException:
@@ -115,6 +124,8 @@ class Compilator(LuaVisitor):
                         result = self.visit(stmt)
                 except BreakException:
                     break
+                except ContinueException:
+                    continue
         except BreakException:
             return result
 
@@ -220,12 +231,12 @@ class Compilator(LuaVisitor):
 code = """
     a=0
     i=0
-    while i<10 do
-        a=a+1
+    while i<10
         i=i+1
-        if a>5 then
-            break
+        if i%2==0 then
+            continue
         end
+        a=a+1
     end
     a
 """
