@@ -26,10 +26,7 @@ repeatStmt: 'repeat' (statement)* 'until' expr;
 
 whileStmt: 'while' expr 'do' (statement)* 'end';
 
-expr: orExpr
-    | 'true'
-    | 'false'
-    | 'nil';
+expr: orExpr;
 
 orExpr: andExpr ('or' andExpr)*;
 
@@ -48,6 +45,9 @@ atom: NUMBER
     | NAME
     | '(' expr ')'
     | '-' atom
+    | 'true'
+    | 'false'
+    | 'nil'
     ;
 
 NUMBER: [0-9]+;
