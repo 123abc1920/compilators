@@ -8,9 +8,12 @@ statement: assign
          | whileStmt
          | repeatStmt
          | ifStmt
+         | breakStmt
          ;
 
 assign: NAME '=' expr;
+
+breakStmt: 'break';
 
 ifStmt: 'if' expr 'then' (statement)* ('elseif' expr 'then' (statement)*)* ('else' (statement)*)? 'end';
 

@@ -4,6 +4,14 @@ from LuaParser import LuaParser
 from LuaVisitor import LuaVisitor
 
 
+class BreakException(Exception):
+    pass
+
+
+class ContinueException(Exception):
+    pass
+
+
 class Compilator(LuaVisitor):
     def __init__(self):
         self.vars = {}
@@ -14,6 +22,9 @@ class Compilator(LuaVisitor):
             res = self.visit(stmt)
             results.append(res)
         return results[-1] if results else None
+
+    def visitBreakStmt(self, ctx):
+        raise BreakException()
 
     def visitStatement(self, ctx):
         if ctx.expr():
@@ -28,6 +39,8 @@ class Compilator(LuaVisitor):
             return self.visit(ctx.repeatStmt())
         if ctx.ifStmt():
             return self.visit(ctx.ifStmt())
+        if ctx.breakStmt():
+            return self.visit(ctx.breakStmt())
         return None
 
     def visitAssign(self, ctx):
@@ -42,10 +55,16 @@ class Compilator(LuaVisitor):
         end = int(self.visit(ctx.expr(1)))
 
         result = None
-        for i in range(start, end):
-            self.vars[var_name] = i
-            for stmt in ctx.statement():
-                result = self.visit(stmt)
+        try:
+            for i in range(start, end):
+                self.vars[var_name] = i
+                try:
+                    for stmt in ctx.statement():
+                        result = self.visit(stmt)
+                except BreakException:
+                    break
+        except BreakException:
+            return result
 
         return result
 
@@ -72,20 +91,32 @@ class Compilator(LuaVisitor):
         exprs = ctx.expr()
         result = None
 
-        while True:
-            for s in statements:
-                result = self.visit(s)
-            if self.visit(exprs):
-                break
+        try:
+            while True:
+                try:
+                    for s in statements:
+                        result = self.visit(s)
+                except BreakException:
+                    break
+                if self.visit(exprs):
+                    break
+        except BreakException:
+            return result
 
         return result
 
     def visitWhileStmt(self, ctx):
         result = None
 
-        while self.visit(ctx.expr()):
-            for stmt in ctx.statement():
-                result = self.visit(stmt)
+        try:
+            while self.visit(ctx.expr()):
+                try:
+                    for stmt in ctx.statement():
+                        result = self.visit(stmt)
+                except BreakException:
+                    break
+        except BreakException:
+            return result
 
         return result
 
@@ -187,12 +218,16 @@ class Compilator(LuaVisitor):
 
 
 code = """
-    a=false
-    b=0
-    if not a then
-        b=10
+    a=0
+    i=0
+    while i<10 do
+        a=a+1
+        i=i+1
+        if a>5 then
+            break
+        end
     end
-    b
+    a
 """
 
 lexer = LuaLexer(InputStream(code))
