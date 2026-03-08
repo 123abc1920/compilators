@@ -29,6 +29,38 @@ class Compilator(LuaVisitor):
     def visitContinueStmt(self, ctx):
         raise ContinueException()
 
+    def visitTable(self, ctx):
+        result = []
+        for i in range(len(ctx.tableEl())):
+            el = self.visit(ctx.tableEl(i))
+            result.append(el)
+        return result
+
+    def visitTableEl(self, ctx):
+        if not ctx.key():
+            return self.visit(ctx.value())
+        else:
+            return {self.visit(ctx.key()): self.visit(ctx.value())}
+
+    def visitKey(self, ctx):
+        if ctx.NUMBER():
+            return int(ctx.NUMBER().getText())
+        if ctx.STRING():
+            return ctx.STRING().getText()[1:-1]
+        if ctx.NAME():
+            name = ctx.NAME().getText()
+            return self.vars.get(name, 0)
+        if ctx.table():
+            return self.visit(ctx.table())
+        if ctx.expr():
+            return self.visit(ctx.expr())
+
+    def visitValue(self, ctx):
+        if ctx.atom():
+            return self.visit(ctx.atom())
+        if ctx.table():
+            return self.visit(ctx.table())
+
     def visitStatement(self, ctx):
         if ctx.expr():
             return self.visit(ctx.expr())
@@ -49,10 +81,16 @@ class Compilator(LuaVisitor):
         return None
 
     def visitAssign(self, ctx):
-        name = ctx.NAME().getText()
-        value = self.visit(ctx.expr())
-        self.vars[name] = value
-        return value
+        if ctx.expr():
+            name = ctx.NAME().getText()
+            value = self.visit(ctx.expr())
+            self.vars[name] = value
+            return value
+        if ctx.table():
+            name = ctx.NAME().getText()
+            value = self.visit(ctx.table())
+            self.vars[name] = value
+            return value
 
     def visitForStmt(self, ctx):
         var_name = ctx.NAME().getText()
@@ -185,19 +223,43 @@ class Compilator(LuaVisitor):
             return int(ctx.NUMBER().getText())
         if ctx.STRING():
             return ctx.STRING().getText()[1:-1]
-        if ctx.NAME():
-            name = ctx.NAME().getText()
+        if ctx.getChildCount() == 4 and ctx.getChild(1).getText() == "[":
+            table_name = ctx.getChild(0).getText()
+            table = self.vars.get(table_name)
+            index = self.visit(ctx.getChild(2)) - 1
+            if index < 0:
+                index = 0
+
+            val = table[index]
+            if isinstance(val, dict):
+                for k in val:
+                    return val[k]
+
+            return val
+        if ctx.NAME() and not ctx.expr() and len(ctx.NAME()) == 1:
+            name = ctx.NAME()[0].getText()
             return self.vars.get(name, 0)
         if ctx.expr():
             return self.visit(ctx.expr())
         if ctx.atom():
             if ctx.getChild(0).getText() == "-":
                 return -self.visit(ctx.atom())
+        if ctx.table():
+            return self.visit(ctx.table())
         if ctx.getText() == "true":
             return True
         if ctx.getText() == "false":
             return False
         if ctx.getText() == "nil":
+            return None
+        if ctx.NAME(0) and ctx.NAME(1):
+            table_name = ctx.NAME(0).getText()
+            field_name = ctx.NAME(1).getText()
+            table = self.vars.get(table_name)
+            for i in table:
+                if isinstance(i, dict):
+                    if field_name in i:
+                        return i[field_name]
             return None
         return 0
 
@@ -225,14 +287,9 @@ class Compilator(LuaVisitor):
 
 
 code = """
-    a=0
-    while true do
-        a=a+1
-        if true and a>5 then
-            break
-        end
-    end
-    a
+    b=9
+    a={"a"= b, 34, "jjj"}
+    a[2]
 """
 
 lexer = LuaLexer(InputStream(code))
@@ -242,6 +299,7 @@ tree = parser.prog()
 
 evaluator = Compilator()
 result = evaluator.visit(tree)
+print(evaluator.vars)
 print(result)
 
 print("Дерево разбора:")

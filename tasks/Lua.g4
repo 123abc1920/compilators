@@ -12,7 +12,19 @@ statement: assign
          | continueStmt
          ;
 
-assign: NAME '=' expr;
+table: '{' (tableEl (',' tableEl)*)? '}';
+
+tableEl: key '=' value | value;
+
+key: NUMBER
+    | STRING
+    | NAME
+    | table
+    | '[' expr ']';
+
+value: atom | table;
+
+assign: NAME '=' expr | NAME '=' table;
 
 breakStmt: 'break';
 
@@ -48,6 +60,9 @@ atom: NUMBER
     | 'true'
     | 'false'
     | 'nil'
+    | table
+    | NAME '[' expr ']'
+    | NAME '.' NAME
     ;
 
 NUMBER: [0-9]+;
