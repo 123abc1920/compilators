@@ -11,14 +11,15 @@ statement: assign
          | breakStmt
          | continueStmt
          | funStmt
-         | returnStmt
          ;
+
+callFun: NAME '(' args? ')';
+
+args: expr (',' expr)*; 
 
 returnStmt: 'return' expr;
 
 funStmt: 'function' NAME '(' params? ')' block 'end';
-
-funExpr: 'function' '(' params? ')' block 'end';
 
 params: NAME (',' NAME)*;
 
@@ -50,7 +51,7 @@ repeatStmt: 'repeat' (statement)* 'until' expr;
 
 whileStmt: 'while' expr 'do' (statement)* 'end';
 
-expr: orExpr | funExpr;
+expr: orExpr | callFun;
 
 orExpr: andExpr ('or' andExpr)*;
 

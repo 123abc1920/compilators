@@ -23,6 +23,65 @@ class Compilator(LuaVisitor):
             results.append(res)
         return results[-1] if results else None
 
+    def visitParams(self, ctx):
+        result = []
+
+        names = ctx.NAME()
+        for n in names:
+            result.append(n.getText())
+
+        return result
+
+    def visitFunStmt(self, ctx):
+        name = ctx.NAME().getText()
+        params = []
+        if ctx.params():
+            params = self.visit(ctx.params())
+        self.call_stack[-1][name] = {"params": params, "block": ctx.block()}
+        return None
+
+    def visitArgs(self, ctx):
+        result = []
+
+        exprs = ctx.expr()
+        for e in exprs:
+            result.append(self.visit(e))
+
+        return result
+
+    def visitReturnStmt(self, ctx):
+        return self.visit(ctx.expr())
+
+    def visitBlock(self, ctx):
+        statements = ctx.statement()
+
+        result = None
+        for s in statements:
+            result = self.visit(s)
+
+        if ctx.returnStmt():
+            return self.visit(ctx.returnStmt())
+
+        return None
+
+    def visitCallFun(self, ctx):
+        name = ctx.NAME().getText()
+        args = []
+        if ctx.args():
+            args = self.visit(ctx.args())
+
+        func = self.call_stack[-1].get(name)
+        self.call_stack.append({})
+
+        for i in range(len(func["params"])):
+            self.call_stack[-1][func["params"][i]] = args[i]
+
+        block = func["block"]
+        result = self.visit(block)
+
+        self.call_stack.pop()
+        return result
+
     def visitBreakStmt(self, ctx):
         raise BreakException()
 
@@ -78,6 +137,8 @@ class Compilator(LuaVisitor):
             return self.visit(ctx.breakStmt())
         if ctx.continueStmt():
             return self.visit(ctx.continueStmt())
+        if ctx.funStmt():
+            return self.visit(ctx.funStmt())
         return None
 
     def visitAssign(self, ctx):
@@ -170,7 +231,10 @@ class Compilator(LuaVisitor):
         return result
 
     def visitExpr(self, ctx):
-        return self.visit(ctx.orExpr())
+        if ctx.orExpr():
+            return self.visit(ctx.orExpr())
+        if ctx.callFun():
+            return self.visit(ctx.callFun())
 
     def visitOrExpr(self, ctx):
         left = self.visit(ctx.andExpr(0))
@@ -287,9 +351,12 @@ class Compilator(LuaVisitor):
 
 
 code = """
-    b=9
-    a={"a"= b, 34, "jjj"}
-    a[2]
+    function func(a, b)
+        a=a+b
+        return a
+    end
+
+    func(20,3)
 """
 
 lexer = LuaLexer(InputStream(code))
