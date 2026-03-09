@@ -14,7 +14,7 @@ class ContinueException(Exception):
 
 class Compilator(LuaVisitor):
     def __init__(self):
-        self.vars = {}
+        self.call_stack = [{}]
 
     def visitProg(self, ctx):
         results = []
@@ -49,7 +49,7 @@ class Compilator(LuaVisitor):
             return ctx.STRING().getText()[1:-1]
         if ctx.NAME():
             name = ctx.NAME().getText()
-            return self.vars.get(name, 0)
+            return self.call_stack[-1].get(name, 0)
         if ctx.table():
             return self.visit(ctx.table())
         if ctx.expr():
@@ -84,12 +84,12 @@ class Compilator(LuaVisitor):
         if ctx.expr():
             name = ctx.NAME().getText()
             value = self.visit(ctx.expr())
-            self.vars[name] = value
+            self.call_stack[-1][name] = value
             return value
         if ctx.table():
             name = ctx.NAME().getText()
             value = self.visit(ctx.table())
-            self.vars[name] = value
+            self.call_stack[-1][name] = value
             return value
 
     def visitForStmt(self, ctx):
@@ -100,7 +100,7 @@ class Compilator(LuaVisitor):
         result = None
         try:
             for i in range(start, end):
-                self.vars[var_name] = i
+                self.call_stack[-1][var_name] = i
                 try:
                     for stmt in ctx.statement():
                         result = self.visit(stmt)
@@ -225,7 +225,7 @@ class Compilator(LuaVisitor):
             return ctx.STRING().getText()[1:-1]
         if ctx.getChildCount() == 4 and ctx.getChild(1).getText() == "[":
             table_name = ctx.getChild(0).getText()
-            table = self.vars.get(table_name)
+            table = self.call_stack[-1].get(table_name)
             index = self.visit(ctx.getChild(2)) - 1
             if index < 0:
                 index = 0
@@ -238,7 +238,7 @@ class Compilator(LuaVisitor):
             return val
         if ctx.NAME() and not ctx.expr() and len(ctx.NAME()) == 1:
             name = ctx.NAME()[0].getText()
-            return self.vars.get(name, 0)
+            return self.call_stack[-1].get(name, 0)
         if ctx.expr():
             return self.visit(ctx.expr())
         if ctx.atom():
@@ -255,7 +255,7 @@ class Compilator(LuaVisitor):
         if ctx.NAME(0) and ctx.NAME(1):
             table_name = ctx.NAME(0).getText()
             field_name = ctx.NAME(1).getText()
-            table = self.vars.get(table_name)
+            table = self.call_stack[-1].get(table_name)
             for i in table:
                 if isinstance(i, dict):
                     if field_name in i:
@@ -299,7 +299,7 @@ tree = parser.prog()
 
 evaluator = Compilator()
 result = evaluator.visit(tree)
-print(evaluator.vars)
+print(evaluator.call_stack)
 print(result)
 
 print("Дерево разбора:")

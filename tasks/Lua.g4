@@ -10,7 +10,19 @@ statement: assign
          | ifStmt
          | breakStmt
          | continueStmt
+         | funStmt
+         | returnStmt
          ;
+
+returnStmt: 'return' expr;
+
+funStmt: 'function' NAME '(' params? ')' block 'end';
+
+funExpr: 'function' '(' params? ')' block 'end';
+
+params: NAME (',' NAME)*;
+
+block: (statement)* returnStmt?;
 
 table: '{' (tableEl (',' tableEl)*)? '}';
 
@@ -38,7 +50,7 @@ repeatStmt: 'repeat' (statement)* 'until' expr;
 
 whileStmt: 'while' expr 'do' (statement)* 'end';
 
-expr: orExpr;
+expr: orExpr | funExpr;
 
 orExpr: andExpr ('or' andExpr)*;
 
