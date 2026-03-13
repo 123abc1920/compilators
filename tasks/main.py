@@ -3,10 +3,11 @@ from LuaLexer import LuaLexer
 from LuaParser import LuaParser
 from ast_lua import ASTBuilder, print_ast
 from lua_inter import Compilator
+from errors import Errors
 
 
 code = """
-    function func(a, b)
+    functi func(a, b)
         return a+b
     end
 
@@ -17,17 +18,27 @@ code = """
 lexer = LuaLexer(InputStream(code))
 stream = CommonTokenStream(lexer)
 parser = LuaParser(stream)
-tree = parser.prog()
 
-evaluator = Compilator()
-result = evaluator.visit(tree)
-print(evaluator.call_stack)
-print(result)
+errors = Errors()
+parser.removeErrorListeners()
+parser.addErrorListener(errors)
 
-print("Дерево разбора:")
-print(tree.toStringTree(recog=parser))
+try:
+    tree = parser.prog()
+    if not errors.errors:
+        print("Ошибок нет")
 
-print("AST дерево:")
-builder = ASTBuilder()
-ast = builder.visit(tree)
-print_ast(ast)
+        evaluator = Compilator()
+        result = evaluator.visit(tree)
+        print(evaluator.call_stack)
+        print(result)
+
+        print("Дерево разбора:")
+        print(tree.toStringTree(recog=parser))
+
+        print("AST дерево:")
+        builder = ASTBuilder()
+        ast = builder.visit(tree)
+        print_ast(ast)
+except Exception as e:
+    print(f"Критическая ошибка: {e}")
