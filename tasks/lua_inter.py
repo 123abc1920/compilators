@@ -1,4 +1,4 @@
-from LuaVisitor import LuaVisitor
+from gen.LuaVisitor import LuaVisitor
 
 
 class BreakException(Exception):
