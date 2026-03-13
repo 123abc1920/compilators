@@ -95,6 +95,9 @@ class ASTBuilder(LuaVisitor):
             value_node = self.visit(ctx.value())
             return ("field", key_node, value_node)
 
+    def visitReadStmt(self, ctx):
+        return ("read", None)
+
     def visitPrintStmt(self, ctx):
         atoms = []
 
@@ -160,6 +163,8 @@ class ASTBuilder(LuaVisitor):
             value_node = self.visit(ctx.expr())
         elif ctx.table():
             value_node = self.visit(ctx.table())
+        elif ctx.readStmt():
+            value_node = self.visit(ctx.readStmt())
         else:
             value_node = ("nil", None)
 

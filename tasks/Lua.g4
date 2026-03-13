@@ -12,7 +12,10 @@ statement: assign
          | continueStmt
          | funStmt
          | printStmt
+         | readStmt
          ;
+
+readStmt: 'read' '(' ')';
 
 printStmt: 'print' '(' argList? ')';
 
@@ -42,7 +45,7 @@ key: NUMBER
 
 value: atom | table;
 
-assign: NAME '=' expr | NAME '=' table;
+assign: NAME '=' expr | NAME '=' table | NAME '=' readStmt;
 
 breakStmt: 'break';
 

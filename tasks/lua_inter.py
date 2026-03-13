@@ -37,6 +37,17 @@ class Compilator(LuaVisitor):
         self.call_stack[-1][name] = {"params": params, "block": ctx.block()}
         return None
 
+    def visitReadStmt(self, ctx):
+        value = input()
+
+        try:
+            return int(value)
+        except:
+            try:
+                return float(value)
+            except:
+                return value
+
     def visitPrintStmt(self, ctx):
         values = []
 
@@ -162,6 +173,11 @@ class Compilator(LuaVisitor):
         if ctx.table():
             name = ctx.NAME().getText()
             value = self.visit(ctx.table())
+            self.call_stack[-1][name] = value
+            return value
+        if ctx.readStmt():
+            name = ctx.NAME().getText()
+            value = self.visit(ctx.readStmt())
             self.call_stack[-1][name] = value
             return value
 
