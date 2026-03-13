@@ -5,6 +5,8 @@ from ast_lua import ASTBuilder, print_ast
 from lua_inter import Compilator
 from errors import Errors
 
+FILE = "tasks/input.lua"
+
 
 def print_ast_tree(tree):
     print("AST дерево:")
@@ -20,15 +22,17 @@ def print_tree(tree, parser):
     print()
 
 
-def main():
-    code = """
-        function func(a, b)
-            return a+b
-        end
+def read_code():
+    code = ""
 
-        a=func(20,3)
-        a
-    """
+    with open(FILE, "r", encoding="utf-8") as f:
+        code = f.read()
+
+    return code
+
+
+def main():
+    code = read_code()
 
     lexer = LuaLexer(InputStream(code))
     stream = CommonTokenStream(lexer)
@@ -45,6 +49,7 @@ def main():
             result = evaluator.visit(tree)
 
             print(result)
+            print()
 
             print_tree(tree, parser)
             print_ast_tree(tree)
