@@ -95,6 +95,15 @@ class ASTBuilder(LuaVisitor):
             value_node = self.visit(ctx.value())
             return ("field", key_node, value_node)
 
+    def visitPrintStmt(self, ctx):
+        atoms = []
+
+        if ctx.argList():
+            for atom_ctx in ctx.argList().atom():
+                atoms.append(self.visit(atom_ctx))
+
+        return ("print", atoms)
+
     def visitKey(self, ctx):
         if ctx.NUMBER():
             return ("number", int(ctx.NUMBER().getText()))
@@ -140,6 +149,8 @@ class ASTBuilder(LuaVisitor):
             return self.visit(ctx.continueStmt())
         if ctx.funStmt():
             return self.visit(ctx.funStmt())
+        if ctx.printStmt():
+            return self.visit(ctx.printStmt())
         return None
 
     def visitAssign(self, ctx):

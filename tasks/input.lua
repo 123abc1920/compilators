@@ -3,4 +3,4 @@ function func(a, b)
 end
 
 a=func(20,3)
-a
+print("result: ", a)

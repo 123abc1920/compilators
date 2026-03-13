@@ -37,6 +37,19 @@ class Compilator(LuaVisitor):
         self.call_stack[-1][name] = {"params": params, "block": ctx.block()}
         return None
 
+    def visitPrintStmt(self, ctx):
+        values = []
+
+        if ctx.argList():
+            for atom_ctx in ctx.argList().atom():
+                val = self.visit(atom_ctx)
+                values.append(val)
+
+        output = " ".join(str(v) for v in values)
+        print(output)
+
+        return None
+
     def visitArgs(self, ctx):
         result = []
 
@@ -136,6 +149,8 @@ class Compilator(LuaVisitor):
             return self.visit(ctx.continueStmt())
         if ctx.funStmt():
             return self.visit(ctx.funStmt())
+        if ctx.printStmt():
+            return self.visit(ctx.printStmt())
         return None
 
     def visitAssign(self, ctx):

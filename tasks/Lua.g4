@@ -11,7 +11,12 @@ statement: assign
          | breakStmt
          | continueStmt
          | funStmt
+         | printStmt
          ;
+
+printStmt: 'print' '(' argList? ')';
+
+argList: atom (',' atom)*;
 
 callFun: NAME '(' args? ')';
 
