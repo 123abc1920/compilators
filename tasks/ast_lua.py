@@ -344,63 +344,63 @@ class ASTBuilder(LuaVisitor):
 
 
 def print_ast(node, level=0):
-    indent = "  " * level
+    offset = "  " * level
 
     if not isinstance(node, tuple):
-        print(f"{indent}{node}")
+        print(f"{offset}{node}")
         return
 
     node_type = node[0]
 
     if node_type == "prog":
-        print(f"{indent}prog")
+        print(f"{offset}prog")
         for stmt in node[1]:
             print_ast(stmt, level + 1)
 
     elif node_type == "function":
-        print(f"{indent}function {node[1]} {node[2]}")
+        print(f"{offset}function {node[1]} {node[2]}")
         print_ast(node[3], level + 1)
 
     elif node_type == "params":
-        print(f"{indent}params {node[1]}")
+        print(f"{offset}params {node[1]}")
 
     elif node_type == "block":
-        print(f"{indent}block")
+        print(f"{offset}block")
         for stmt in node[1]:
             print_ast(stmt, level + 1)
 
     elif node_type == "return":
-        print(f"{indent}return")
+        print(f"{offset}return")
         print_ast(node[1], level + 1)
 
     elif node_type == "assign":
-        print(f"{indent}assign {node[1]}")
+        print(f"{offset}assign {node[1]}")
         print_ast(node[2], level + 1)
 
     elif node_type == "call":
-        print(f"{indent}call {node[1]}")
+        print(f"{offset}call {node[1]}")
         for arg in node[2]:
             print_ast(arg, level + 1)
 
     elif node_type == "binop":
-        print(f"{indent}{node[1]}")
+        print(f"{offset}{node[1]}")
         print_ast(node[2], level + 1)
         print_ast(node[3], level + 1)
 
     elif node_type == "var":
-        print(f"{indent}{node[1]}")
+        print(f"{offset}{node[1]}")
 
     elif node_type == "number":
-        print(f"{indent}{node[1]}")
+        print(f"{offset}{node[1]}")
 
     elif node_type == "string":
-        print(f'{indent}"{node[1]}"')
+        print(f'{offset}"{node[1]}"')
 
     elif node_type == "boolean":
-        print(f"{indent}{node[1]}")
+        print(f"{offset}{node[1]}")
 
     elif node_type == "nil":
-        print(f"{indent}nil")
+        print(f"{offset}nil")
 
     else:
-        print(f"{indent}unknown: {node}")
+        print(f"{offset}unknown: {node}")
