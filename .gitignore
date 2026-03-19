@@ -9,3 +9,4 @@ LuaLexer.tokens
 LuaListener.py
 LuaParser.py
 LuaVisitor.py
+gen/

@@ -5,6 +5,7 @@ from ast_lua import ASTBuilder, print_ast
 from lua_inter import Compilator
 from errors import Errors
 
+# TODO: ast tree палочки или рисунок
 FILE = "tasks/input.lua"
 
 
