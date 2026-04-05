@@ -158,3 +158,43 @@ class LuaVisitor:
 
     def generic_visit(self, node):
         pass
+
+
+def tree_to_string(node):
+    if node is None:
+        return ""
+
+    node_name = node.__class__.__name__.replace("Node", "")
+    result = node_name
+
+    if hasattr(node, "name"):
+        result += f" [{node.name}]"
+    if hasattr(node, "value") and not isinstance(node.value, (list, dict)):
+        if hasattr(node.value, "__dict__"):
+            pass
+        else:
+            result += f" = {repr(node.value)}"
+    if hasattr(node, "op"):
+        result += f" {node.op}"
+
+    children = []
+
+    for attr_name, attr_value in node.__dict__.items():
+        if attr_name == "value" and hasattr(attr_value, "__dict__"):
+            children.append(tree_to_string(attr_value))
+        elif isinstance(attr_value, list):
+            for item in attr_value:
+                if hasattr(item, "__dict__"):
+                    children.append(tree_to_string(item))
+                elif item is not None:
+                    children.append(repr(item))
+        elif hasattr(attr_value, "__dict__"):
+            children.append(tree_to_string(attr_value))
+        elif attr_value is not None and attr_name not in ["op", "name", "value"]:
+            if not isinstance(attr_value, (str, int, float, bool)):
+                children.append(repr(attr_value))
+
+    if children:
+        result += " ( " + " ".join(children) + " )"
+
+    return result

@@ -1,4 +1,4 @@
-from app_factory import WithAntlr
+from app_factory import WithAntlr, WithoutAntlr
 
 FILE = "tasks/input.lua"
 
@@ -14,8 +14,8 @@ def read_code():
 
 def main():
     code = read_code()
-
-    parser = WithAntlr(code)
+    parser = WithoutAntlr()
+    parser.parse(code)
 
 
 if __name__ == "__main__":

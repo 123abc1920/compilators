@@ -1,13 +1,14 @@
-from antlr4 import *
-from gen.LuaLexer import LuaLexer
-from gen.LuaParser import LuaParser
-from antlr_parser.ast_lua import ASTBuilder, print_ast
-from antlr_parser.lua_inter import Compilator
-from antlr_parser.errors import Errors
+from print_ast import print_ast_from_tuples
 
 
 class WithAntlr:
-    def __init__(self, code):
+    def parse(self, code):
+        from gen.LuaLexer import LuaLexer
+        from gen.LuaParser import LuaParser
+        from antlr_parser.lua_inter import Compilator
+        from antlr_parser.errors import Errors
+        from antlr4 import InputStream, CommonTokenStream
+
         lexer = LuaLexer(InputStream(code))
         stream = CommonTokenStream(lexer)
         parser = LuaParser(stream)
@@ -31,13 +32,45 @@ class WithAntlr:
             print(f"{e}")
 
     def print_ast_tree(self, tree):
+        from antlr_parser.ast_lua import ASTBuilder
+
         print("AST дерево:")
         builder = ASTBuilder()
         ast = builder.visit(tree)
-        print_ast(ast)
+        print_ast_from_tuples(ast)
         print()
 
     def print_tree(self, tree, parser):
         print("Дерево разбора:")
         print(tree.toStringTree(recog=parser))
         print()
+
+
+class WithoutAntlr:
+    def parse(self, code):
+        from my_parser.lexer import Lexer, Token
+        from my_parser.parser import Parser
+        from my_parser.lua_not_antlr_inter import Compilator
+
+        lexer = Lexer(code)
+        tokens = lexer.tokenize()
+        parser = Parser(tokens)
+        ast = parser.parse()
+        compilator = Compilator()
+        compilator.visit(ast)
+
+        self.print_tree(ast)
+        self.print_ast_tree(ast)
+
+    def print_ast_tree(self, ast):
+        from my_parser.ast_lua import ast_to_tuple
+
+        print("AST дерево:")
+        ast_tuple = ast_to_tuple(ast)
+        print_ast_from_tuples(ast_tuple)
+        print()
+
+    def print_tree(self, node):
+        from my_parser.nodes import tree_to_string
+
+        print(tree_to_string(node))
