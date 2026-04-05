@@ -1,6 +1,4 @@
 from .nodes import LuaVisitor
-from .lexer import Lexer
-from .parser import Parser
 
 
 class BreakException(Exception):
@@ -153,13 +151,14 @@ class Compilator(LuaVisitor):
 
     def visitCallFunNode(self, node):
         name = node.name
+
         args = []
         if node.args:
             args = self.visit(node.args)
 
         func = self.call_stack[-1].get(name)
         if not func:
-            return None
+            raise Exception(f"Ошибка выполнения: функция '{name}' не определена")
 
         self.call_stack.append({})
 
