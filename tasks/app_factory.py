@@ -1,9 +1,9 @@
 from antlr4 import *
 from gen.LuaLexer import LuaLexer
 from gen.LuaParser import LuaParser
-from ast_lua import ASTBuilder, print_ast
-from lua_inter import Compilator
-from errors import Errors
+from antlr_parser.ast_lua import ASTBuilder, print_ast
+from antlr_parser.lua_inter import Compilator
+from antlr_parser.errors import Errors
 
 
 class WithAntlr:

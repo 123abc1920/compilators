@@ -1,4 +1,6 @@
-from .my_parser.nodes import LuaVisitor
+from .nodes import LuaVisitor
+from .lexer import Lexer
+from .parser import Parser
 
 
 class BreakException(Exception):
