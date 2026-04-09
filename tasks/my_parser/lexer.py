@@ -1,13 +1,9 @@
-from dataclasses import dataclass
-from typing import Any
-
-
-@dataclass
 class Token:
-    type: str
-    value: Any
-    line: int
-    column: int
+    def __init__(self, type, value, line, column):
+        self.type = type
+        self.value = value
+        self.line = line
+        self.column = column
 
 
 class Lexer:
@@ -20,28 +16,28 @@ class Lexer:
     def tokenize(self):
         tokens = []
         while self.pos < len(self.code):
-            ch = self.code[self.pos]
+            symbol = self.code[self.pos]
 
-            if ch in " \t\r":
+            if symbol in " \t\r":
                 self.pos += 1
                 self.column += 1
                 continue
 
-            if ch == "\n":
+            if symbol == "\n":
                 tokens.append(Token("NEWLINE", "\n", self.line, self.column))
                 self.pos += 1
                 self.line += 1
                 self.column = 1
                 continue
 
-            if ch == "-":
+            if symbol == "-":
                 if self.pos + 1 < len(self.code) and self.code[self.pos + 1] == "-":
                     self.pos += 2
                     while self.pos < len(self.code) and self.code[self.pos] != "\n":
                         self.pos += 1
                     continue
 
-            if ch.isdigit():
+            if symbol.isdigit():
                 start = self.pos
                 while self.pos < len(self.code) and (
                     self.code[self.pos].isdigit() or self.code[self.pos] == "."
@@ -56,8 +52,8 @@ class Lexer:
                 self.column += self.pos - start
                 continue
 
-            if ch in "\"'":
-                quote = ch
+            if symbol in "\"'":
+                quote = symbol
                 self.pos += 1
                 start = self.pos
                 while self.pos < len(self.code) and self.code[self.pos] != quote:
@@ -68,7 +64,7 @@ class Lexer:
                 self.column += len(string_value) + 2
                 continue
 
-            if ch.isalpha() or ch == "_":
+            if symbol.isalpha() or symbol == "_":
                 start = self.pos
                 while self.pos < len(self.code) and (
                     self.code[self.pos].isalnum() or self.code[self.pos] == "_"
@@ -110,8 +106,8 @@ class Lexer:
                 self.column += self.pos - start
                 continue
 
-            if ch in "+-*/%<>":
-                op = ch
+            if symbol in "+-*/%<>":
+                op = symbol
                 self.pos += 1
                 if self.pos < len(self.code) and self.code[self.pos] == "=":
                     op += self.code[self.pos]
@@ -120,13 +116,13 @@ class Lexer:
                 self.column += len(op)
                 continue
 
-            if ch == "=":
+            if symbol == "=":
                 tokens.append(Token("PUNCT", "=", self.line, self.column))
                 self.pos += 1
                 self.column += 1
                 continue
 
-            if ch == "~":
+            if symbol == "~":
                 self.pos += 1
                 if self.pos < len(self.code) and self.code[self.pos] == "=":
                     tokens.append(Token("OPERATOR", "~=", self.line, self.column))
@@ -134,8 +130,8 @@ class Lexer:
                     self.column += 2
                 continue
 
-            if ch in "(){}[],.;:":
-                tokens.append(Token("PUNCT", ch, self.line, self.column))
+            if symbol in "(){}[],.;:":
+                tokens.append(Token("PUNCT", symbol, self.line, self.column))
                 self.pos += 1
                 self.column += 1
                 continue

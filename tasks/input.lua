@@ -1,11 +1,13 @@
 a = 6 + 7
 print("result: ", a)
 
+-- Комментарий
+
 function add(a, b)
     return a + b
 end
 
-prin87uhjit(add(1, 2))
+prinоооt(add(1, 2))
 
 for i = 1, 10 do
     print(i)

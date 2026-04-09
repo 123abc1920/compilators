@@ -8,12 +8,12 @@ class Parser:
         self.tokens = tokens
         self.pos = 0
 
-    def current_token(self) -> Token:
+    def current_token(self):
         if self.pos < len(self.tokens):
             return self.tokens[self.pos]
         return Token("EOF", None, 0, 0)
 
-    def eat(self, expected_type: str, expected_value: Any = None):
+    def read_token(self, expected_type, expected_value=None):
         token = self.current_token()
         if token.type != expected_type:
             raise SyntaxError(
@@ -34,7 +34,7 @@ class Parser:
             if stmt:
                 statements.append(stmt)
             while self.current_token().type == "NEWLINE":
-                self.eat("NEWLINE")
+                self.read_token("NEWLINE")
         return ProgNode(statements)
 
     def statement(self):
@@ -72,22 +72,22 @@ class Parser:
                 return self.expr()
 
         if token.type == "NEWLINE":
-            self.eat("NEWLINE")
+            self.read_token("NEWLINE")
             return None
 
         return self.expr()
 
     def print_stmt(self):
-        self.eat("KEYWORD", "print")
+        self.read_token("KEYWORD", "print")
         args = None
         if self.current_token().type == "PUNCT" and self.current_token().value == "(":
-            self.eat("PUNCT", "(")
+            self.read_token("PUNCT", "(")
             if (
                 self.current_token().type != "PUNCT"
                 or self.current_token().value != ")"
             ):
                 args = self.arg_list()
-            self.eat("PUNCT", ")")
+            self.read_token("PUNCT", ")")
         return PrintStmtNode(args)
 
     def arg_list(self):
@@ -96,29 +96,29 @@ class Parser:
         while (
             self.current_token().type == "PUNCT" and self.current_token().value == ","
         ):
-            self.eat("PUNCT", ",")
+            self.read_token("PUNCT", ",")
             args.append(self.atom())
         return ArgListNode(args)
 
     def fun_stmt(self):
-        self.eat("KEYWORD", "function")
-        name = self.eat("NAME")
-        self.eat("PUNCT", "(")
+        self.read_token("KEYWORD", "function")
+        name = self.read_token("NAME")
+        self.read_token("PUNCT", "(")
         params = None
         if self.current_token().type == "NAME":
             params = self.params()
-        self.eat("PUNCT", ")")
+        self.read_token("PUNCT", ")")
         block = self.block()
-        self.eat("KEYWORD", "end")
+        self.read_token("KEYWORD", "end")
         return FunStmtNode(name.value, params, block)
 
     def params(self):
-        params = [self.eat("NAME").value]
+        params = [self.read_token("NAME").value]
         while (
             self.current_token().type == "PUNCT" and self.current_token().value == ","
         ):
-            self.eat("PUNCT", ",")
-            params.append(self.eat("NAME").value)
+            self.read_token("PUNCT", ",")
+            params.append(self.read_token("NAME").value)
         return ParamsNode(params)
 
     def block(self):
@@ -130,7 +130,7 @@ class Parser:
             if self.current_token().type == "EOF":
                 break
             if self.current_token().type == "NEWLINE":
-                self.eat("NEWLINE")
+                self.read_token("NEWLINE")
                 continue
             stmt = self.statement()
             if stmt:
@@ -138,13 +138,13 @@ class Parser:
         return BlockNode(statements)
 
     def for_stmt(self):
-        self.eat("KEYWORD", "for")
-        name = self.eat("NAME")
-        self.eat("PUNCT", "=")
+        self.read_token("KEYWORD", "for")
+        name = self.read_token("NAME")
+        self.read_token("PUNCT", "=")
         start = self.expr()
-        self.eat("PUNCT", ",")
+        self.read_token("PUNCT", ",")
         end = self.expr()
-        self.eat("KEYWORD", "do")
+        self.read_token("KEYWORD", "do")
         statements = []
         while (
             self.current_token().type != "KEYWORD"
@@ -153,18 +153,18 @@ class Parser:
             if self.current_token().type == "EOF":
                 break
             if self.current_token().type == "NEWLINE":
-                self.eat("NEWLINE")
+                self.read_token("NEWLINE")
                 continue
             stmt = self.statement()
             if stmt:
                 statements.append(stmt)
-        self.eat("KEYWORD", "end")
+        self.read_token("KEYWORD", "end")
         return ForStmtNode(name.value, start, end, statements)
 
     def while_stmt(self):
-        self.eat("KEYWORD", "while")
+        self.read_token("KEYWORD", "while")
         condition = self.expr()
-        self.eat("KEYWORD", "do")
+        self.read_token("KEYWORD", "do")
         statements = []
         while (
             self.current_token().type != "KEYWORD"
@@ -173,16 +173,16 @@ class Parser:
             if self.current_token().type == "EOF":
                 break
             if self.current_token().type == "NEWLINE":
-                self.eat("NEWLINE")
+                self.read_token("NEWLINE")
                 continue
             stmt = self.statement()
             if stmt:
                 statements.append(stmt)
-        self.eat("KEYWORD", "end")
+        self.read_token("KEYWORD", "end")
         return WhileStmtNode(condition, statements)
 
     def repeat_stmt(self):
-        self.eat("KEYWORD", "repeat")
+        self.read_token("KEYWORD", "repeat")
         statements = []
         while (
             self.current_token().type != "KEYWORD"
@@ -191,22 +191,22 @@ class Parser:
             if self.current_token().type == "EOF":
                 break
             if self.current_token().type == "NEWLINE":
-                self.eat("NEWLINE")
+                self.read_token("NEWLINE")
                 continue
             stmt = self.statement()
             if stmt:
                 statements.append(stmt)
-        self.eat("KEYWORD", "until")
+        self.read_token("KEYWORD", "until")
         condition = self.expr()
         return RepeatStmtNode(statements, condition)
 
     def if_stmt(self):
-        self.eat("KEYWORD", "if")
+        self.read_token("KEYWORD", "if")
         conditions = []
         blocks = []
 
         condition = self.expr()
-        self.eat("KEYWORD", "then")
+        self.read_token("KEYWORD", "then")
         block = self.block()
         conditions.append(condition)
         blocks.append(block)
@@ -215,9 +215,9 @@ class Parser:
             self.current_token().type == "KEYWORD"
             and self.current_token().value == "elseif"
         ):
-            self.eat("KEYWORD", "elseif")
+            self.read_token("KEYWORD", "elseif")
             condition = self.expr()
-            self.eat("KEYWORD", "then")
+            self.read_token("KEYWORD", "then")
             block = self.block()
             conditions.append(condition)
             blocks.append(block)
@@ -226,23 +226,23 @@ class Parser:
             self.current_token().type == "KEYWORD"
             and self.current_token().value == "else"
         ):
-            self.eat("KEYWORD", "else")
+            self.read_token("KEYWORD", "else")
             block = self.block()
             blocks.append(block)
 
-        self.eat("KEYWORD", "end")
+        self.read_token("KEYWORD", "end")
         return IfStmtNode(conditions, blocks)
 
     def break_stmt(self):
-        self.eat("KEYWORD", "break")
+        self.read_token("KEYWORD", "break")
         return BreakStmtNode()
 
     def continue_stmt(self):
-        self.eat("KEYWORD", "continue")
+        self.read_token("KEYWORD", "continue")
         return ContinueStmtNode()
 
     def return_stmt(self):
-        self.eat("KEYWORD", "return")
+        self.read_token("KEYWORD", "return")
         expr = None
         if self.current_token().type not in [
             "NEWLINE",
@@ -252,14 +252,14 @@ class Parser:
         return ReturnStmtNode(expr)
 
     def read_stmt(self):
-        self.eat("KEYWORD", "read")
-        self.eat("PUNCT", "(")
-        self.eat("PUNCT", ")")
+        self.read_token("KEYWORD", "read")
+        self.read_token("PUNCT", "(")
+        self.read_token("PUNCT", ")")
         return ReadStmtNode()
 
     def assign(self):
-        name = self.eat("NAME")
-        self.eat("PUNCT", "=")
+        name = self.read_token("NAME")
+        self.read_token("PUNCT", "=")
 
         if (
             self.current_token().type == "KEYWORD"
@@ -280,7 +280,7 @@ class Parser:
             self.current_token().type == "KEYWORD"
             and self.current_token().value == "or"
         ):
-            self.eat("KEYWORD", "or")
+            self.read_token("KEYWORD", "or")
             right = self.and_expr()
             left = OrExprNode(left, right)
         return left
@@ -291,7 +291,7 @@ class Parser:
             self.current_token().type == "KEYWORD"
             and self.current_token().value == "and"
         ):
-            self.eat("KEYWORD", "and")
+            self.read_token("KEYWORD", "and")
             right = self.not_expr()
             left = AndExprNode(left, right)
         return left
@@ -301,7 +301,7 @@ class Parser:
             self.current_token().type == "KEYWORD"
             and self.current_token().value == "not"
         ):
-            self.eat("KEYWORD", "not")
+            self.read_token("KEYWORD", "not")
             expr = self.not_expr()
             return NotExprNode(expr)
         return self.comparison()
@@ -316,7 +316,7 @@ class Parser:
             "==",
             "~=",
         ]:
-            op = self.eat("OPERATOR").value
+            op = self.read_token("OPERATOR").value
             right = self.add_expr()
             return ComparisonNode(left, op, right)
         return left
@@ -327,7 +327,7 @@ class Parser:
             self.current_token().type == "OPERATOR"
             and self.current_token().value in ["+", "-"]
         ):
-            op = self.eat("OPERATOR").value
+            op = self.read_token("OPERATOR").value
             right = self.mul_expr()
             left = AddExprNode(left, op, right)
         return left
@@ -338,7 +338,7 @@ class Parser:
             self.current_token().type == "OPERATOR"
             and self.current_token().value in ["*", "/", "%"]
         ):
-            op = self.eat("OPERATOR").value
+            op = self.read_token("OPERATOR").value
             right = self.atom()
             left = MulExprNode(left, op, right)
         return left
@@ -347,18 +347,18 @@ class Parser:
         token = self.current_token()
 
         if token.type == "NUMBER":
-            self.eat("NUMBER")
+            self.read_token("NUMBER")
             return AtomNode("number", token.value)
         elif token.type == "STRING":
-            self.eat("STRING")
+            self.read_token("STRING")
             return AtomNode("string", token.value)
         elif token.type == "KEYWORD" and token.value in ["true", "false", "nil"]:
-            self.eat("KEYWORD")
+            self.read_token("KEYWORD")
             return AtomNode("literal", token.value)
         elif token.type == "PUNCT" and token.value == "{":
             return self.table()
         elif token.type == "NAME":
-            self.eat("NAME")
+            self.read_token("NAME")
             if (
                 self.current_token().type == "PUNCT"
                 and self.current_token().value == "("
@@ -368,37 +368,37 @@ class Parser:
                 self.current_token().type == "PUNCT"
                 and self.current_token().value == "."
             ):
-                self.eat("PUNCT", ".")
-                field = self.eat("NAME")
+                self.read_token("PUNCT", ".")
+                field = self.read_token("NAME")
                 return AtomNode("field", (token.value, field.value))
             elif (
                 self.current_token().type == "PUNCT"
                 and self.current_token().value == "["
             ):
-                self.eat("PUNCT", "[")
+                self.read_token("PUNCT", "[")
                 index = self.expr()
-                self.eat("PUNCT", "]")
+                self.read_token("PUNCT", "]")
                 return AtomNode("index", (token.value, index))
             else:
                 return AtomNode("name", token.value)
         elif token.type == "PUNCT" and token.value == "(":
-            self.eat("PUNCT", "(")
+            self.read_token("PUNCT", "(")
             expr = self.expr()
-            self.eat("PUNCT", ")")
+            self.read_token("PUNCT", ")")
             return expr
         elif token.type == "OPERATOR" and token.value == "-":
-            self.eat("OPERATOR", "-")
+            self.read_token("OPERATOR", "-")
             expr = self.atom()
             return UnaryMinusNode(expr)
 
         return AtomNode("none", None)
 
     def table(self):
-        self.eat("PUNCT", "{")
+        self.read_token("PUNCT", "{")
         elements = []
         if self.current_token().type != "PUNCT" or self.current_token().value != "}":
             elements = self.table_elements()
-        self.eat("PUNCT", "}")
+        self.read_token("PUNCT", "}")
         return TableNode(elements)
 
     def table_elements(self):
@@ -406,7 +406,7 @@ class Parser:
         while (
             self.current_token().type == "PUNCT" and self.current_token().value == ","
         ):
-            self.eat("PUNCT", ",")
+            self.read_token("PUNCT", ",")
             if (
                 self.current_token().type != "PUNCT"
                 or self.current_token().value != "}"
@@ -418,11 +418,11 @@ class Parser:
         return TableElementNode(None, self.expr())
 
     def call_fun(self, name):
-        self.eat("PUNCT", "(")
+        self.read_token("PUNCT", "(")
         args = None
         if self.current_token().type != "PUNCT" or self.current_token().value != ")":
             args = self.args()
-        self.eat("PUNCT", ")")
+        self.read_token("PUNCT", ")")
         return CallFunNode(name, args)
 
     def args(self):
@@ -430,6 +430,6 @@ class Parser:
         while (
             self.current_token().type == "PUNCT" and self.current_token().value == ","
         ):
-            self.eat("PUNCT", ",")
+            self.read_token("PUNCT", ",")
             args.append(self.expr())
         return ArgsNode(args)

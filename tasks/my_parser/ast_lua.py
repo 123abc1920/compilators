@@ -55,6 +55,15 @@ def ast_to_tuple(node):
                 return ("nil", None)
         elif node.type == "name":
             return ("var", node.value)
+        elif node.type == "field":
+            table_name, field_name = node.value
+            return ("field", table_name, field_name)
+        elif node.type == "index":
+            table_name, index_node = node.value
+            index_tuple = ast_to_tuple(index_node)
+            return ("index", table_name, index_tuple)
+        else:
+            return ("unknown", node.type)
 
     elif node_name == "FunStmt":
         params = ast_to_tuple(node.params) if node.params else ("params", [])
@@ -92,5 +101,49 @@ def ast_to_tuple(node):
 
     elif node_name == "TableElement":
         return ast_to_tuple(node.value)
+
+    elif node_name == "ForStmt":
+        start = ast_to_tuple(node.start)
+        end = ast_to_tuple(node.end)
+        statements = [ast_to_tuple(stmt) for stmt in node.statements]
+        return ("for", node.name, start, end, ("block", statements))
+
+    elif node_name == "WhileStmt":
+        condition = ast_to_tuple(node.condition)
+        statements = [ast_to_tuple(stmt) for stmt in node.statements]
+        return ("while", condition, ("block", statements))
+
+    elif node_name == "RepeatStmt":
+        statements = [ast_to_tuple(stmt) for stmt in node.statements]
+        condition = ast_to_tuple(node.condition)
+        return ("repeat", ("block", statements), condition)
+
+    elif node_name == "ReadStmt":
+        return ("call", "read", [])
+
+    elif node_name == "IfStmt":
+        conditions_blocks = []
+        for i, condition in enumerate(node.conditions):
+            cond = ast_to_tuple(condition)
+            block = (
+                "block",
+                [ast_to_tuple(stmt) for stmt in node.blocks[i].statements],
+            )
+            conditions_blocks.append((cond, block))
+
+        else_block = None
+        if len(node.blocks) > len(node.conditions):
+            else_block = (
+                "block",
+                [ast_to_tuple(stmt) for stmt in node.blocks[-1].statements],
+            )
+
+        return ("if", conditions_blocks, else_block)
+
+    elif node_name == "BreakStmt":
+        return ("break",)
+
+    elif node_name == "ContinueStmt":
+        return ("continue",)
 
     return ("unknown", str(node))
