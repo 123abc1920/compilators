@@ -7,7 +7,7 @@ function add(a, b)
     return a + b
 end
 
-prinоооt(add(1, 2))
+print(add(1, 2))
 
 for i = 1, 10 do
     print(i)

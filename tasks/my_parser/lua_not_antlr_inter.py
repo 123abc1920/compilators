@@ -1,4 +1,5 @@
 from .nodes import LuaVisitor
+from .errors import errors
 
 
 class BreakException(Exception):
@@ -158,7 +159,7 @@ class Compilator(LuaVisitor):
 
         func = self.call_stack[-1].get(name)
         if not func:
-            raise Exception(f"Ошибка выполнения: функция '{name}' не определена")
+            errors.error(f"функция '{name}' не определена")
 
         self.call_stack.append({})
 
