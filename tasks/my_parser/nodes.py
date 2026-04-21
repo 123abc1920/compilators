@@ -201,6 +201,10 @@ def tree_to_string(node):
     if node is None:
         return ""
 
+    if node.__class__.__name__ == "AtomNode" and node.type == "index":
+        table_name, index_node = node.value
+        return f"Atom = {table_name}[{tree_to_string(index_node)}]"
+
     node_name = node.__class__.__name__.replace("Node", "")
     result = node_name
 
