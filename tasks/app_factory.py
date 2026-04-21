@@ -1,4 +1,6 @@
 from print_ast import print_ast_from_tuples
+import subprocess
+import os
 
 
 class WithAntlr:
@@ -70,7 +72,7 @@ class WithoutAntlr:
             for err in errors:
                 print(f"  {err}")
             return False
-        
+
         modifier = ASTModifier(analyzer.symbols)
         modified_ast = modifier.modify(ast)
 
@@ -79,6 +81,8 @@ class WithoutAntlr:
 
         self.print_tree(modified_ast)
         self.print_ast_tree(modified_ast)
+
+        self.generate_exe(modified_ast)
 
         return True
 
@@ -90,3 +94,23 @@ class WithoutAntlr:
     def print_tree(self, node):
         print(tree_to_string(node))
         print()
+
+    def generate_exe(self, modified_ast):
+        from my_parser.exe_gen import CodeGen
+
+        generator = CodeGen()
+        c_code = generator.generate(modified_ast)
+
+        with open("output.c", "w", encoding="utf-8") as f:
+            f.write(c_code)
+        print("Сгенерирован output.c")
+
+        result = subprocess.run(
+            ["gcc", "output.c", "-o", "program.exe"], capture_output=True, text=True
+        )
+
+        if result.returncode == 0:
+            print("Скомпилирован program.exe")
+        else:
+            print("Ошибка компиляции:")
+            print(result.stderr)
