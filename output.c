@@ -10,7 +10,7 @@ int main() {
     int i;
     char k[100];
     int m;
-    int the_t;
+    int the_t[3];
     int y;
     
     a = (6 + 7);
@@ -37,9 +37,11 @@ int main() {
             break;
         }
     }
-    the_t = 0;
+    the_t[0] = 1;
+    the_t[1] = 2;
+    the_t[2] = 3;
     for (i = 1; i < 4; i++) {
-        printf("%d\n", 0);
+        printf("%d\n", the_t[i - 1]);
     }
     m = (5 + "9");
     printf("%d\n", m);

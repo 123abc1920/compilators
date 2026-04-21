@@ -5,6 +5,8 @@ class CodeGen:
         self.temp_count = 0
         self.all_vars = set()
         self.string_vars = set()
+        self.array_vars = set()
+        self.array_sizes = {}
         self.declared_vars = set()
         self.functions = []
 
@@ -14,6 +16,8 @@ class CodeGen:
     def generate(self, node):
         self.all_vars = set()
         self.string_vars = set()
+        self.array_vars = set()
+        self.array_sizes = {}
         self.declared_vars = set()
         self.functions = []
 
@@ -33,7 +37,10 @@ class CodeGen:
         self.indent += 1
 
         for var in sorted(self.all_vars):
-            if var in self.string_vars:
+            if var in self.array_vars:
+                size = self.array_sizes.get(var, 100)
+                self.emit(f"int {var}[{size}];")
+            elif var in self.string_vars:
                 self.emit(f"char {var}[100];")
             else:
                 self.emit(f"int {var};")
@@ -79,6 +86,9 @@ class CodeGen:
             self.all_vars.add(node.name)
             if node.value.__class__.__name__ == "ReadStmtNode":
                 self.string_vars.add(node.name)
+            elif node.value.__class__.__name__ == "TableNode":
+                self.array_vars.add(node.name)
+                self.array_sizes[node.name] = len(node.value.elements)
 
         elif node.__class__.__name__ == "ForStmtNode":
             self.all_vars.add(node.name)
@@ -92,6 +102,9 @@ class CodeGen:
         elif node.__class__.__name__ == "AtomNode":
             if node.type == "name":
                 self.all_vars.add(node.value)
+            elif node.type == "index":
+                table_name, _ = node.value
+                self.all_vars.add(table_name)
 
         for attr in dir(node):
             if attr.startswith("_"):
@@ -133,6 +146,11 @@ class CodeGen:
 
         if node.value.__class__.__name__ == "ReadStmtNode":
             self.emit(f"strcpy({node.name}, {value});")
+        elif node.value.__class__.__name__ == "TableNode":
+            elements = node.value.elements
+            for i, elem in enumerate(elements):
+                val = self.expr_to_str(elem.value)
+                self.emit(f"{node.name}[{i}] = {val};")
         else:
             self.emit(f"{node.name} = {value};")
 
@@ -258,6 +276,10 @@ class CodeGen:
                 return "0"
             if node.type == "name":
                 return node.value
+            if node.type == "index":
+                table_name, index_node = node.value
+                index = self.expr_to_str(index_node)
+                return f"{table_name}[{index} - 1]"
 
         elif node_name == "ReadStmtNode":
             return self.gen_ReadStmtNode(node)
