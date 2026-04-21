@@ -145,5 +145,9 @@ def ast_to_tuple(node):
 
     elif node_name == "ContinueStmt":
         return ("continue",)
+    
+    elif node_name == "CastNode":
+        expr = ast_to_tuple(node.expr)
+        return ("cast", node.target_type, expr)
 
     return ("unknown", str(node))

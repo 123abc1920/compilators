@@ -1,3 +1,5 @@
+from .nodes import CastNode
+
 class Symbol:
     def __init__(self, name, type_, line, col):
         self.name = name
@@ -88,22 +90,22 @@ class SemanticAnalyzer:
         self.visit(node.right)
 
     def visit_FunStmtNode(self, node):
-        self.symbols.define(node.name, 'function', node.line, node.col)
-        
+        self.symbols.define(node.name, "function", node.line, node.col)
+
         sym = self.symbols.lookup(node.name)
         if sym:
             sym.num_params = len(node.params.params) if node.params else 0
-        
+
         self.symbols.enter_scope()
         self.symbols.in_function = True
-        
+
         if node.params:
             for param in node.params.params:
-                self.symbols.define(param, 'any', node.line, node.col)
-            
+                self.symbols.define(param, "any", node.line, node.col)
+
         if node.block:
             self.visit(node.block)
-        
+
         self.symbols.exit_scope()
         self.symbols.in_function = False
 
@@ -152,16 +154,17 @@ class SemanticAnalyzer:
         if sym is None:
             self.error(f"Function '{node.name}' not defined", node.line, node.col)
             return node
-        
+
         if sym.num_params is not None:
             num_args = len(node.args.args) if node.args else 0
             if num_args != sym.num_params:
                 self.error(
                     f"Function '{node.name}' expects {sym.num_params} argument(s), "
                     f"but got {num_args}",
-                    node.line, node.col
+                    node.line,
+                    node.col,
                 )
-        
+
         if node.args:
             for arg in node.args.args:
                 self.visit(arg)
@@ -187,5 +190,68 @@ class SemanticAnalyzer:
 
         if node_name == "ComparisonNode":
             return "boolean"
+
+        return "unknown"
+
+
+class ASTModifier:
+    def __init__(self, symbol_table):
+        self.symbols = symbol_table
+
+    def modify(self, node):
+        return self.visit(node)
+
+    def visit(self, node):
+        if node is None:
+            return None
+
+        node_name = node.__class__.__name__
+
+        if node_name == "AddExprNode":
+            return self.modify_AddExprNode(node)
+
+        for attr_name, attr_value in node.__dict__.items():
+            if attr_name in ("line", "col"):
+                continue
+            if isinstance(attr_value, list):
+                for i, item in enumerate(attr_value):
+                    if hasattr(item, "__dict__"):
+                        attr_value[i] = self.visit(item)
+            elif hasattr(attr_value, "__dict__"):
+                setattr(node, attr_name, self.visit(attr_value))
+
+        return node
+
+    def modify_AddExprNode(self, node):
+        node.left = self.visit(node.left)
+        node.right = self.visit(node.right)
+
+        left_type = self.get_type(node.left)
+        right_type = self.get_type(node.right)
+
+        if left_type == "number" and right_type == "number":
+            return node
+
+        if left_type == "string" and right_type == "number":
+            node.right = CastNode(node.right, "string", node.right.line, node.right.col)
+        elif left_type == "number" and right_type == "string":
+            node.left = CastNode(node.left, "string", node.left.line, node.left.col)
+
+        return node
+
+    def get_type(self, node):
+        node_name = node.__class__.__name__
+
+        if node_name == "AtomNode":
+            if node.type == "number":
+                return "number"
+            if node.type == "string":
+                return "string"
+            if node.type == "name":
+                sym = self.symbols.lookup(node.value)
+                return sym.type if sym else "unknown"
+
+        if node_name == "CastNode":
+            return node.target_type
 
         return "unknown"

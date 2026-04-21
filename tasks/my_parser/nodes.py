@@ -180,6 +180,13 @@ class TableElementNode(Node):
         self.value = value
 
 
+class CastNode(Node):
+    def __init__(self, expr, target_type, line=0, col=0):
+        super().__init__(line, col)
+        self.expr = expr
+        self.target_type = target_type
+
+
 class LuaVisitor:
     def visit(self, node):
         method_name = f"visit{node.__class__.__name__}"

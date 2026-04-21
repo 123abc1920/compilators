@@ -259,3 +259,16 @@ class Compilator(LuaVisitor):
                 return val
             return None
         return 0
+
+    def visitCastNode(self, node):
+        value = self.visit(node.expr)
+        
+        if node.target_type == 'number':
+            try:
+                return float(value) if '.' in str(value) else int(value)
+            except (ValueError, TypeError):
+                return 0
+        elif node.target_type == 'string':
+            return str(value)
+        
+        return value

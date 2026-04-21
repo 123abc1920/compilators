@@ -236,6 +236,10 @@ def print_ast_from_tuples(node, level=0, is_last=True, prefix=""):
         else:
             print(f"{index}]")
 
+    elif node_type == "cast":
+        print(f"{current_prefix}cast to {node[1]}")
+        print_ast_from_tuples(node[2], level + 1, True, child_prefix)
+
     else:
         if isinstance(node, tuple):
             if len(node) == 2:

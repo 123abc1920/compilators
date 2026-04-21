@@ -40,6 +40,9 @@ for i = 1, 4 do
     print(the_t[i])
 end
 
+m=5+"9"
+print(m)
+
 print("input k:")
 k = read()
 print("read:", k)

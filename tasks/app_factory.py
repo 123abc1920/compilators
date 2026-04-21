@@ -49,7 +49,7 @@ class WithAntlr:
 from my_parser.lexer import Lexer
 from my_parser.parser import Parser
 from my_parser.lua_not_antlr_inter import Compilator
-from my_parser.semantic import SemanticAnalyzer
+from my_parser.semantic import SemanticAnalyzer, ASTModifier
 from my_parser.ast_lua import ast_to_tuple
 from my_parser.nodes import tree_to_string
 
@@ -70,12 +70,15 @@ class WithoutAntlr:
             for err in errors:
                 print(f"  {err}")
             return False
+        
+        modifier = ASTModifier(analyzer.symbols)
+        modified_ast = modifier.modify(ast)
 
         compilator = Compilator()
-        compilator.visit(ast)
+        compilator.visit(modified_ast)
 
-        self.print_tree(ast)
-        self.print_ast_tree(ast)
+        self.print_tree(modified_ast)
+        self.print_ast_tree(modified_ast)
 
         return True
 
