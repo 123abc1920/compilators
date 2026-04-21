@@ -1,151 +1,181 @@
-class ProgNode:
-    def __init__(self, statements):
+class Node:
+    def __init__(self, line=0, col=0):
+        self.line = line
+        self.col = col
+
+
+class ProgNode(Node):
+    def __init__(self, statements, line=0, col=0):
+        super().__init__(line, col)
         self.statements = statements
 
 
-class ParamsNode:
-    def __init__(self, params):
+class ParamsNode(Node):
+    def __init__(self, params, line=0, col=0):
+        super().__init__(line, col)
         self.params = params
 
 
-class FunStmtNode:
-    def __init__(self, name, params, block):
+class FunStmtNode(Node):
+    def __init__(self, name, params, block, line=0, col=0):
+        super().__init__(line, col)
         self.name = name
         self.params = params
         self.block = block
 
 
-class PrintStmtNode:
-    def __init__(self, args):
+class PrintStmtNode(Node):
+    def __init__(self, args, line=0, col=0):
+        super().__init__(line, col)
         self.args = args
 
 
-class ArgListNode:
-    def __init__(self, args):
+class ArgListNode(Node):
+    def __init__(self, args, line=0, col=0):
+        super().__init__(line, col)
         self.args = args
 
 
-class BlockNode:
-    def __init__(self, statements):
+class BlockNode(Node):
+    def __init__(self, statements, line=0, col=0):
+        super().__init__(line, col)
         self.statements = statements
 
 
-class ForStmtNode:
-    def __init__(self, name, start, end, statements):
+class ForStmtNode(Node):
+    def __init__(self, name, start, end, statements, line=0, col=0):
+        super().__init__(line, col)
         self.name = name
         self.start = start
         self.end = end
         self.statements = statements
 
 
-class WhileStmtNode:
-    def __init__(self, condition, statements):
+class WhileStmtNode(Node):
+    def __init__(self, condition, statements, line=0, col=0):
+        super().__init__(line, col)
         self.condition = condition
         self.statements = statements
 
 
-class RepeatStmtNode:
-    def __init__(self, statements, condition):
+class RepeatStmtNode(Node):
+    def __init__(self, statements, condition, line=0, col=0):
+        super().__init__(line, col)
         self.statements = statements
         self.condition = condition
 
 
-class IfStmtNode:
-    def __init__(self, conditions, blocks):
+class IfStmtNode(Node):
+    def __init__(self, conditions, blocks, line=0, col=0):
+        super().__init__(line, col)
         self.conditions = conditions
         self.blocks = blocks
 
 
-class BreakStmtNode:
+class BreakStmtNode(Node):
     pass
 
 
-class ContinueStmtNode:
+class ContinueStmtNode(Node):
     pass
 
 
-class ReturnStmtNode:
-    def __init__(self, expr):
+class ReturnStmtNode(Node):
+    def __init__(self, expr, line=0, col=0):
+        super().__init__(line, col)
         self.expr = expr
 
 
-class ReadStmtNode:
+class ReadStmtNode(Node):
     pass
 
 
-class AssignNode:
-    def __init__(self, name, value):
+class AssignNode(Node):
+    def __init__(self, name, value, line=0, col=0):
+        super().__init__(line, col)
         self.name = name
         self.value = value
 
 
-class CallFunNode:
-    def __init__(self, name, args):
+class CallFunNode(Node):
+    def __init__(self, name, args, line=0, col=0):
+        super().__init__(line, col)
         self.name = name
         self.args = args
 
 
-class ArgsNode:
-    def __init__(self, args):
+class ArgsNode(Node):
+    def __init__(self, args, line=0, col=0):
+        super().__init__(line, col)
         self.args = args
 
 
-class OrExprNode:
-    def __init__(self, left, right):
+class OrExprNode(Node):
+    def __init__(self, left, right, line=0, col=0):
+        super().__init__(line, col)
         self.left = left
         self.right = right
 
 
-class AndExprNode:
-    def __init__(self, left, right):
+class AndExprNode(Node):
+    def __init__(self, left, right, line=0, col=0):
+        super().__init__(line, col)
         self.left = left
         self.right = right
 
 
-class NotExprNode:
-    def __init__(self, expr):
+class NotExprNode(Node):
+    def __init__(self, expr, line=0, col=0):
+        super().__init__(line, col)
         self.expr = expr
 
 
-class ComparisonNode:
-    def __init__(self, left, op, right):
+class ComparisonNode(Node):
+    def __init__(self, left, op, right, line=0, col=0):
+        super().__init__(line, col)
         self.left = left
         self.op = op
         self.right = right
 
 
-class AddExprNode:
-    def __init__(self, left, op, right):
+class AddExprNode(Node):
+    def __init__(self, left, op, right, line=0, col=0):
+        super().__init__(line, col)
         self.left = left
         self.op = op
         self.right = right
 
 
-class MulExprNode:
-    def __init__(self, left, op, right):
+class MulExprNode(Node):
+    def __init__(self, left, op, right, line=0, col=0):
+        super().__init__(line, col)
         self.left = left
         self.op = op
         self.right = right
 
 
-class UnaryMinusNode:
-    def __init__(self, expr):
+class UnaryMinusNode(Node):
+    def __init__(self, expr, line=0, col=0):
+        super().__init__(line, col)
         self.expr = expr
 
 
-class AtomNode:
-    def __init__(self, type_, value):
+class AtomNode(Node):
+    def __init__(self, type_, value, line=0, col=0):
+        super().__init__(line, col)
         self.type = type_
         self.value = value
 
 
-class TableNode:
-    def __init__(self, elements):
+class TableNode(Node):
+    def __init__(self, elements, line=0, col=0):
+        super().__init__(line, col)
         self.elements = elements
 
 
-class TableElementNode:
-    def __init__(self, key, value):
+class TableElementNode(Node):
+    def __init__(self, key, value, line=0, col=0):
+        super().__init__(line, col)
         self.key = key
         self.value = value
 

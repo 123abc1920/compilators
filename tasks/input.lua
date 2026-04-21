@@ -14,7 +14,7 @@ for i = 1, 10 do
 end
 
 a = 0
-while a < 6 and True do
+while a < 6 and true do
     print(a)
     a = a + 1
 end
@@ -26,7 +26,7 @@ repeat
 until b > 10
 
 y = 0
-while True do
+while true do
     print(y)
     y = y + 1
     if y > 7 then
@@ -43,3 +43,6 @@ end
 print("input k:")
 k = read()
 print("read:", k)
+
+-- print(u)
+-- print(add(7, 7, 8))

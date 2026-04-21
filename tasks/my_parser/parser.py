@@ -35,7 +35,9 @@ class Parser:
                 statements.append(stmt)
             while self.current_token().type == "NEWLINE":
                 self.read_token("NEWLINE")
-        return ProgNode(statements)
+        line = statements[0].line if statements else 0
+        col = statements[0].col if statements else 0
+        return ProgNode(statements, line, col)
 
     def statement(self):
         token = self.current_token()
@@ -78,7 +80,7 @@ class Parser:
         return self.expr()
 
     def print_stmt(self):
-        self.read_token("KEYWORD", "print")
+        token = self.read_token("KEYWORD", "print")
         args = None
         if self.current_token().type == "PUNCT" and self.current_token().value == "(":
             self.read_token("PUNCT", "(")
@@ -88,7 +90,7 @@ class Parser:
             ):
                 args = self.arg_list()
             self.read_token("PUNCT", ")")
-        return PrintStmtNode(args)
+        return PrintStmtNode(args, line=token.line, col=token.column)
 
     def arg_list(self):
         args = []
@@ -101,7 +103,7 @@ class Parser:
         return ArgListNode(args)
 
     def fun_stmt(self):
-        self.read_token("KEYWORD", "function")
+        token = self.read_token("KEYWORD", "function")
         name = self.read_token("NAME")
         self.read_token("PUNCT", "(")
         params = None
@@ -110,7 +112,7 @@ class Parser:
         self.read_token("PUNCT", ")")
         block = self.block()
         self.read_token("KEYWORD", "end")
-        return FunStmtNode(name.value, params, block)
+        return FunStmtNode(name.value, params, block, line=token.line, col=token.column)
 
     def params(self):
         params = [self.read_token("NAME").value]
@@ -138,7 +140,7 @@ class Parser:
         return BlockNode(statements)
 
     def for_stmt(self):
-        self.read_token("KEYWORD", "for")
+        token = self.read_token("KEYWORD", "for")
         name = self.read_token("NAME")
         self.read_token("PUNCT", "=")
         start = self.expr()
@@ -159,10 +161,12 @@ class Parser:
             if stmt:
                 statements.append(stmt)
         self.read_token("KEYWORD", "end")
-        return ForStmtNode(name.value, start, end, statements)
+        return ForStmtNode(
+            name.value, start, end, statements, line=token.line, col=token.column
+        )
 
     def while_stmt(self):
-        self.read_token("KEYWORD", "while")
+        token = self.read_token("KEYWORD", "while")
         condition = self.expr()
         self.read_token("KEYWORD", "do")
         statements = []
@@ -179,10 +183,10 @@ class Parser:
             if stmt:
                 statements.append(stmt)
         self.read_token("KEYWORD", "end")
-        return WhileStmtNode(condition, statements)
+        return WhileStmtNode(condition, statements, line=token.line, col=token.column)
 
     def repeat_stmt(self):
-        self.read_token("KEYWORD", "repeat")
+        token = self.read_token("KEYWORD", "repeat")
         statements = []
         while (
             self.current_token().type != "KEYWORD"
@@ -198,10 +202,10 @@ class Parser:
                 statements.append(stmt)
         self.read_token("KEYWORD", "until")
         condition = self.expr()
-        return RepeatStmtNode(statements, condition)
+        return RepeatStmtNode(statements, condition, line=token.line, col=token.column)
 
     def if_stmt(self):
-        self.read_token("KEYWORD", "if")
+        token = self.read_token("KEYWORD", "if")
         conditions = []
         blocks = []
 
@@ -231,34 +235,34 @@ class Parser:
             blocks.append(block)
 
         self.read_token("KEYWORD", "end")
-        return IfStmtNode(conditions, blocks)
+        return IfStmtNode(conditions, blocks, line=token.line, col=token.column)
 
     def break_stmt(self):
-        self.read_token("KEYWORD", "break")
-        return BreakStmtNode()
+        token = self.read_token("KEYWORD", "break")
+        return BreakStmtNode(line=token.line, col=token.column)
 
     def continue_stmt(self):
-        self.read_token("KEYWORD", "continue")
-        return ContinueStmtNode()
+        token = self.read_token("KEYWORD", "continue")
+        return ContinueStmtNode(line=token.line, col=token.column)
 
     def return_stmt(self):
-        self.read_token("KEYWORD", "return")
+        token = self.read_token("KEYWORD", "return")
         expr = None
         if self.current_token().type not in [
             "NEWLINE",
             "KEYWORD",
         ] or self.current_token().value not in ["end", "else", "elseif"]:
             expr = self.expr()
-        return ReturnStmtNode(expr)
+        return ReturnStmtNode(expr, line=token.line, col=token.column)
 
     def read_stmt(self):
-        self.read_token("KEYWORD", "read")
+        token = self.read_token("KEYWORD", "read")
         self.read_token("PUNCT", "(")
         self.read_token("PUNCT", ")")
-        return ReadStmtNode()
+        return ReadStmtNode(line=token.line, col=token.column)
 
     def assign(self):
-        name = self.read_token("NAME")
+        name_token = self.read_token("NAME")
         self.read_token("PUNCT", "=")
 
         if (
@@ -266,10 +270,14 @@ class Parser:
             and self.current_token().value == "read"
         ):
             read_node = self.read_stmt()
-            return AssignNode(name.value, read_node)
+            return AssignNode(
+                name_token.value, read_node, line=name_token.line, col=name_token.column
+            )
         else:
             value = self.expr()
-            return AssignNode(name.value, value)
+            return AssignNode(
+                name_token.value, value, line=name_token.line, col=name_token.column
+            )
 
     def expr(self):
         return self.or_expr()
@@ -280,9 +288,9 @@ class Parser:
             self.current_token().type == "KEYWORD"
             and self.current_token().value == "or"
         ):
-            self.read_token("KEYWORD", "or")
+            op_token = self.read_token("KEYWORD", "or")
             right = self.and_expr()
-            left = OrExprNode(left, right)
+            left = OrExprNode(left, right, line=op_token.line, col=op_token.column)
         return left
 
     def and_expr(self):
@@ -291,9 +299,9 @@ class Parser:
             self.current_token().type == "KEYWORD"
             and self.current_token().value == "and"
         ):
-            self.read_token("KEYWORD", "and")
+            op_token = self.read_token("KEYWORD", "and")
             right = self.not_expr()
-            left = AndExprNode(left, right)
+            left = AndExprNode(left, right, line=op_token.line, col=op_token.column)
         return left
 
     def not_expr(self):
@@ -301,9 +309,9 @@ class Parser:
             self.current_token().type == "KEYWORD"
             and self.current_token().value == "not"
         ):
-            self.read_token("KEYWORD", "not")
+            op_token = self.read_token("KEYWORD", "not")
             expr = self.not_expr()
-            return NotExprNode(expr)
+            return NotExprNode(expr, line=op_token.line, col=op_token.column)
         return self.comparison()
 
     def comparison(self):
@@ -316,9 +324,11 @@ class Parser:
             "==",
             "~=",
         ]:
-            op = self.read_token("OPERATOR").value
+            op_token = self.read_token("OPERATOR")
             right = self.add_expr()
-            return ComparisonNode(left, op, right)
+            return ComparisonNode(
+                left, op_token.value, right, line=op_token.line, col=op_token.column
+            )
         return left
 
     def add_expr(self):
@@ -327,9 +337,11 @@ class Parser:
             self.current_token().type == "OPERATOR"
             and self.current_token().value in ["+", "-"]
         ):
-            op = self.read_token("OPERATOR").value
+            op_token = self.read_token("OPERATOR")
             right = self.mul_expr()
-            left = AddExprNode(left, op, right)
+            left = AddExprNode(
+                left, op_token.value, right, line=op_token.line, col=op_token.column
+            )
         return left
 
     def mul_expr(self):
@@ -338,9 +350,11 @@ class Parser:
             self.current_token().type == "OPERATOR"
             and self.current_token().value in ["*", "/", "%"]
         ):
-            op = self.read_token("OPERATOR").value
+            op_token = self.read_token("OPERATOR")
             right = self.atom()
-            left = MulExprNode(left, op, right)
+            left = MulExprNode(
+                left, op_token.value, right, line=op_token.line, col=op_token.column
+            )
         return left
 
     def atom(self):
@@ -348,29 +362,39 @@ class Parser:
 
         if token.type == "NUMBER":
             self.read_token("NUMBER")
-            return AtomNode("number", token.value)
+            return AtomNode("number", token.value, line=token.line, col=token.column)
+
         elif token.type == "STRING":
             self.read_token("STRING")
-            return AtomNode("string", token.value)
+            return AtomNode("string", token.value, line=token.line, col=token.column)
+
         elif token.type == "KEYWORD" and token.value in ["true", "false", "nil"]:
             self.read_token("KEYWORD")
-            return AtomNode("literal", token.value)
+            return AtomNode("literal", token.value, line=token.line, col=token.column)
+
         elif token.type == "PUNCT" and token.value == "{":
             return self.table()
+
         elif token.type == "NAME":
+            name_token = token
             self.read_token("NAME")
             if (
                 self.current_token().type == "PUNCT"
                 and self.current_token().value == "("
             ):
-                return self.call_fun(token.value)
+                return self.call_fun(name_token.value)
             elif (
                 self.current_token().type == "PUNCT"
                 and self.current_token().value == "."
             ):
                 self.read_token("PUNCT", ".")
                 field = self.read_token("NAME")
-                return AtomNode("field", (token.value, field.value))
+                return AtomNode(
+                    "field",
+                    (name_token.value, field.value),
+                    line=name_token.line,
+                    col=name_token.column,
+                )
             elif (
                 self.current_token().type == "PUNCT"
                 and self.current_token().value == "["
@@ -378,28 +402,44 @@ class Parser:
                 self.read_token("PUNCT", "[")
                 index = self.expr()
                 self.read_token("PUNCT", "]")
-                return AtomNode("index", (token.value, index))
+                return AtomNode(
+                    "index",
+                    (name_token.value, index),
+                    line=name_token.line,
+                    col=name_token.column,
+                )
             else:
-                return AtomNode("name", token.value)
+                return AtomNode(
+                    "name",
+                    name_token.value,
+                    line=name_token.line,
+                    col=name_token.column,
+                )
+
         elif token.type == "PUNCT" and token.value == "(":
+            paren_token = token
             self.read_token("PUNCT", "(")
             expr = self.expr()
             self.read_token("PUNCT", ")")
+            if hasattr(expr, "line") and expr.line:
+                return expr
             return expr
+
         elif token.type == "OPERATOR" and token.value == "-":
+            op_token = token
             self.read_token("OPERATOR", "-")
             expr = self.atom()
-            return UnaryMinusNode(expr)
+            return UnaryMinusNode(expr, line=op_token.line, col=op_token.column)
 
-        return AtomNode("none", None)
+        return AtomNode("none", None, line=token.line, col=token.column)
 
     def table(self):
-        self.read_token("PUNCT", "{")
+        brace_token = self.read_token("PUNCT", "{")
         elements = []
         if self.current_token().type != "PUNCT" or self.current_token().value != "}":
             elements = self.table_elements()
         self.read_token("PUNCT", "}")
-        return TableNode(elements)
+        return TableNode(elements, line=brace_token.line, col=brace_token.column)
 
     def table_elements(self):
         elements = [self.table_element()]
@@ -418,12 +458,13 @@ class Parser:
         return TableElementNode(None, self.expr())
 
     def call_fun(self, name):
+        paren_token = self.current_token()
         self.read_token("PUNCT", "(")
         args = None
         if self.current_token().type != "PUNCT" or self.current_token().value != ")":
             args = self.args()
         self.read_token("PUNCT", ")")
-        return CallFunNode(name, args)
+        return CallFunNode(name, args, line=paren_token.line, col=paren_token.column)
 
     def args(self):
         args = [self.expr()]

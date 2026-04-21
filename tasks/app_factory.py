@@ -46,31 +46,44 @@ class WithAntlr:
         print()
 
 
+from my_parser.lexer import Lexer
+from my_parser.parser import Parser
+from my_parser.lua_not_antlr_inter import Compilator
+from my_parser.semantic import SemanticAnalyzer
+from my_parser.ast_lua import ast_to_tuple
+from my_parser.nodes import tree_to_string
+
+
 class WithoutAntlr:
     def parse(self, code):
-        from my_parser.lexer import Lexer, Token
-        from my_parser.parser import Parser
-        from my_parser.lua_not_antlr_inter import Compilator
-
         lexer = Lexer(code)
         tokens = lexer.tokenize()
+
         parser = Parser(tokens)
         ast = parser.parse()
+
+        analyzer = SemanticAnalyzer()
+        errors = analyzer.analyze(ast)
+
+        if errors:
+            print("Ошибки семантического анализа:")
+            for err in errors:
+                print(f"  {err}")
+            return False
+
         compilator = Compilator()
         compilator.visit(ast)
 
         self.print_tree(ast)
         self.print_ast_tree(ast)
 
-    def print_ast_tree(self, ast):
-        from my_parser.ast_lua import ast_to_tuple
+        return True
 
-        print("AST дерево:")
+    def print_ast_tree(self, ast):
         ast_tuple = ast_to_tuple(ast)
         print_ast_from_tuples(ast_tuple)
         print()
 
     def print_tree(self, node):
-        from my_parser.nodes import tree_to_string
-
         print(tree_to_string(node))
+        print()
