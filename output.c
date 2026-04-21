@@ -9,7 +9,7 @@ int main() {
     int b;
     int i;
     char k[100];
-    int m;
+    char m[100];
     int the_t[3];
     int y;
     
@@ -43,13 +43,17 @@ int main() {
     for (i = 1; i < 4; i++) {
         printf("%d\n", the_t[i - 1]);
     }
-    m = (5 + "9");
-    printf("%d\n", m);
+    char temp_str_0[100];
+    sprintf(temp_str_0, "%d", 5);
+    char concat_1[200];
+    sprintf(concat_1, "%s%s", temp_str_0, "9");
+    strcpy(m, concat_1);
+    printf("%s\n", m);
     printf("%s\n", "input k:");
-    char read_temp_0[100];
-    fgets(read_temp_0, 100, stdin);
-    read_temp_0[strcspn(read_temp_0, "\n")] = 0;
-    strcpy(k, read_temp_0);
+    char read_temp_2[100];
+    fgets(read_temp_2, 100, stdin);
+    read_temp_2[strcspn(read_temp_2, "\n")] = 0;
+    strcpy(k, read_temp_2);
     printf("%s\n", "read:");
     printf("%s\n", k);
     return 0;

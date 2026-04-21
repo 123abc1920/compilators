@@ -13,6 +13,15 @@ class CodeGen:
     def emit(self, line):
         self.code.append("    " * self.indent + line)
 
+    def _is_string_expr(self, node):
+        if node is None:
+            return False
+        if node.__class__.__name__ == "AtomNode":
+            return node.type == "string"
+        if node.__class__.__name__ == "AddExprNode":
+            return self._is_string_expr(node.left) or self._is_string_expr(node.right)
+        return False
+
     def generate(self, node):
         self.all_vars = set()
         self.string_vars = set()
@@ -89,6 +98,9 @@ class CodeGen:
             elif node.value.__class__.__name__ == "TableNode":
                 self.array_vars.add(node.name)
                 self.array_sizes[node.name] = len(node.value.elements)
+            elif node.value.__class__.__name__ == "AddExprNode":
+                if self._is_string_expr(node.value):
+                    self.string_vars.add(node.name)
 
         elif node.__class__.__name__ == "ForStmtNode":
             self.all_vars.add(node.name)
@@ -151,6 +163,9 @@ class CodeGen:
             for i, elem in enumerate(elements):
                 val = self.expr_to_str(elem.value)
                 self.emit(f"{node.name}[{i}] = {val};")
+        elif node.name in self.string_vars:
+            # Если переменная строка - используем strcpy
+            self.emit(f"strcpy({node.name}, {value});")
         else:
             self.emit(f"{node.name} = {value};")
 
@@ -287,7 +302,28 @@ class CodeGen:
         elif node_name == "AddExprNode":
             left = self.expr_to_str(node.left)
             right = self.expr_to_str(node.right)
-            return f"({left} + {right})"
+
+            if left.startswith('"') or right.startswith('"'):
+                if not left.startswith('"'):
+                    temp_left = f"temp_str_{self.temp_count}"
+                    self.temp_count += 1
+                    self.emit(f"char {temp_left}[100];")
+                    self.emit(f'sprintf({temp_left}, "%d", {left});')
+                    left = temp_left
+                if not right.startswith('"'):
+                    temp_right = f"temp_str_{self.temp_count}"
+                    self.temp_count += 1
+                    self.emit(f"char {temp_right}[100];")
+                    self.emit(f'sprintf({temp_right}, "%d", {right});')
+                    right = temp_right
+
+                result_var = f"concat_{self.temp_count}"
+                self.temp_count += 1
+                self.emit(f"char {result_var}[200];")
+                self.emit(f'sprintf({result_var}, "%s%s", {left}, {right});')
+                return result_var
+            else:
+                return f"({left} + {right})"
 
         elif node_name == "MulExprNode":
             left = self.expr_to_str(node.left)
