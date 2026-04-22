@@ -74,7 +74,7 @@ class CodeGen:
             return
 
         if node.__class__.__name__ == "FunStmtNode":
-            self.gen_FunStmtNode_body(node)
+            self.genFunStmtNode_body(node)
 
         for attr in dir(node):
             if attr.startswith("_"):
@@ -132,7 +132,7 @@ class CodeGen:
     def visit(self, node):
         if node is None:
             return
-        method_name = f"gen_{node.__class__.__name__}"
+        method_name = f"gen{node.__class__.__name__}"
         method = getattr(self, method_name, self.generic_visit)
         return method(node)
 
@@ -148,12 +148,12 @@ class CodeGen:
             elif hasattr(value, "__dict__"):
                 self.visit(value)
 
-    def gen_ProgNode(self, node):
+    def genProgNode(self, node):
         for stmt in node.statements:
             if stmt.__class__.__name__ != "FunStmtNode":
                 self.visit(stmt)
 
-    def gen_AssignNode(self, node):
+    def genAssignNode(self, node):
         value = self.expr_to_str(node.value)
 
         if node.value.__class__.__name__ == "ReadStmtNode":
@@ -169,7 +169,7 @@ class CodeGen:
         else:
             self.add_code_line(f"{node.name} = {value};")
 
-    def gen_PrintStmtNode(self, node):
+    def genPrintStmtNode(self, node):
         if node.args:
             for arg in node.args.args:
                 val = self.expr_to_str(arg)
@@ -184,7 +184,7 @@ class CodeGen:
         else:
             self.add_code_line('printf("\\n");')
 
-    def gen_ReadStmtNode(self, node):
+    def genReadStmtNode(self, node):
         temp_var = f"read_temp_{self.temp_count}"
         self.temp_count += 1
 
@@ -194,7 +194,7 @@ class CodeGen:
 
         return temp_var
 
-    def gen_WhileStmtNode(self, node):
+    def genWhileStmtNode(self, node):
         cond = self.expr_to_str(node.condition)
         self.add_code_line(f"while ({cond}) {{")
         self.indent += 1
@@ -203,7 +203,7 @@ class CodeGen:
         self.indent -= 1
         self.add_code_line("}")
 
-    def gen_ForStmtNode(self, node):
+    def genForStmtNode(self, node):
         start = self.expr_to_str(node.start)
         end = self.expr_to_str(node.end)
         self.add_code_line(f"for ({node.name} = {start}; {node.name} < {end}; {node.name}++) {{")
@@ -213,7 +213,7 @@ class CodeGen:
         self.indent -= 1
         self.add_code_line("}")
 
-    def gen_IfStmtNode(self, node):
+    def genIfStmtNode(self, node):
         for i, cond in enumerate(node.conditions):
             cond_str = self.expr_to_str(cond)
             if i == 0:
@@ -233,19 +233,19 @@ class CodeGen:
             self.indent -= 1
         self.add_code_line("}")
 
-    def gen_BreakStmtNode(self, node):
+    def genBreakStmtNode(self, node):
         self.add_code_line("break;")
 
-    def gen_ContinueStmtNode(self, node):
+    def genContinueStmtNode(self, node):
         self.add_code_line("continue;")
 
-    def gen_ReturnStmtNode(self, node):
+    def genReturnStmtNode(self, node):
         if node.expr:
             self.add_code_line(f"return {self.expr_to_str(node.expr)};")
         else:
             self.add_code_line("return;")
 
-    def gen_FunStmtNode_body(self, node):
+    def genFunStmtNode_body(self, node):
         params = []
         if node.params:
             params = node.params.params
@@ -262,10 +262,10 @@ class CodeGen:
         self.indent -= 1
         self.add_code_line("}")
 
-    def gen_FunStmtNode(self, node):
+    def genFunStmtNode(self, node):
         pass
 
-    def gen_CallFunNode(self, node):
+    def genCallFunNode(self, node):
         args = []
         if node.args:
             for arg in node.args.args:
@@ -297,7 +297,7 @@ class CodeGen:
                 return f"{table_name}[{index} - 1]"
 
         elif node_name == "ReadStmtNode":
-            return self.gen_ReadStmtNode(node)
+            return self.genReadStmtNode(node)
 
         elif node_name == "AddExprNode":
             left = self.expr_to_str(node.left)
@@ -353,7 +353,7 @@ class CodeGen:
             return f"(!{expr})"
 
         elif node_name == "CallFunNode":
-            return self.gen_CallFunNode(node)
+            return self.genCallFunNode(node)
 
         elif node_name == "CastNode":
             expr = self.expr_to_str(node.expr)

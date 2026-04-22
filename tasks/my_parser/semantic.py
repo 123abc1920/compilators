@@ -1,5 +1,6 @@
 from .nodes import CastNode
 
+
 class CodeObject:
     def __init__(self, name, type_, line, col):
         self.name = name
@@ -47,7 +48,7 @@ class SemanticAnalizator:
         return self.errors
 
     def visit(self, node):
-        method_name = f"visit_{node.__class__.__name__}"
+        method_name = f"visit{node.__class__.__name__}"
         method = getattr(self, method_name, self.generic_visit)
         return method(node)
 
@@ -63,11 +64,11 @@ class SemanticAnalizator:
             elif hasattr(value, "__dict__"):
                 self.visit(value)
 
-    def visit_ProgNode(self, node):
+    def visitProgNode(self, node):
         for stmt in node.statements:
             self.visit(stmt)
 
-    def visit_AssignNode(self, node):
+    def visitAssignNode(self, node):
         self.visit(node.value)
 
         sym = self.symbols.find_code_obj(node.name)
@@ -75,21 +76,21 @@ class SemanticAnalizator:
             var_type = self.get_expr_type(node.value)
             self.symbols.define(node.name, var_type, node.line, node.col)
 
-    def visit_AtomNode(self, node):
+    def visitAtomNode(self, node):
         if node.type == "name":
             sym = self.symbols.find_code_obj(node.value)
             if sym is None:
                 self.error(f"Variable '{node.value}' not defined", node.line, node.col)
 
-    def visit_AddExprNode(self, node):
+    def visitAddExprNode(self, node):
         self.visit(node.left)
         self.visit(node.right)
 
-    def visit_ComparisonNode(self, node):
+    def visitComparisonNode(self, node):
         self.visit(node.left)
         self.visit(node.right)
 
-    def visit_FunStmtNode(self, node):
+    def visitFunStmtNode(self, node):
         self.symbols.define(node.name, "function", node.line, node.col)
 
         sym = self.symbols.find_code_obj(node.name)
@@ -109,7 +110,7 @@ class SemanticAnalizator:
         self.symbols.pop_stack()
         self.symbols.in_function = False
 
-    def visit_WhileStmtNode(self, node):
+    def visitWhileStmtNode(self, node):
         old_in_loop = self.symbols.in_loop
         self.symbols.in_loop = True
 
@@ -119,7 +120,7 @@ class SemanticAnalizator:
 
         self.symbols.in_loop = old_in_loop
 
-    def visit_ForStmtNode(self, node):
+    def visitForStmtNode(self, node):
         old_in_loop = self.symbols.in_loop
         self.symbols.in_loop = True
 
@@ -135,21 +136,21 @@ class SemanticAnalizator:
         self.symbols.pop_stack()
         self.symbols.in_loop = old_in_loop
 
-    def visit_BreakStmtNode(self, node):
+    def visitBreakStmtNode(self, node):
         if not self.symbols.in_loop:
             self.error("'break' outside of loop", node.line, node.col)
 
-    def visit_ContinueStmtNode(self, node):
+    def visitContinueStmtNode(self, node):
         if not self.symbols.in_loop:
             self.error("'continue' outside of loop", node.line, node.col)
 
-    def visit_ReturnStmtNode(self, node):
+    def visitReturnStmtNode(self, node):
         if not self.symbols.in_function:
             self.error("'return' outside of function", node.line, node.col)
         if node.expr:
             self.visit(node.expr)
 
-    def visit_CallFunNode(self, node):
+    def visitCallFunNode(self, node):
         sym = self.symbols.find_code_obj(node.name)
         if sym is None:
             self.error(f"Function '{node.name}' not defined", node.line, node.col)
@@ -208,7 +209,7 @@ class ASTModifier:
         node_name = node.__class__.__name__
 
         if node_name == "AddExprNode":
-            return self.modify_AddExprNode(node)
+            return self.modifyAddExprNode(node)
 
         for attr_name, attr_value in node.__dict__.items():
             if attr_name in ("line", "col"):
@@ -222,7 +223,7 @@ class ASTModifier:
 
         return node
 
-    def modify_AddExprNode(self, node):
+    def modifyAddExprNode(self, node):
         node.left = self.visit(node.left)
         node.right = self.visit(node.right)
 
@@ -248,7 +249,7 @@ class ASTModifier:
             if node.type == "string":
                 return "string"
             if node.type == "name":
-                sym = self.symbols.lookup(node.value)
+                sym = self.symbols.find_code_obj(node.value)
                 return sym.type if sym else "unknown"
 
         if node_name == "CastNode":
