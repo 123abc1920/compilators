@@ -1,6 +1,6 @@
 from .nodes import CastNode
 
-class Symbol:
+class CodeObject:
     def __init__(self, name, type_, line, col):
         self.name = name
         self.type = type_
@@ -9,34 +9,34 @@ class Symbol:
         self.num_params = None
 
 
-class SymbolTable:
+class CodeObjectsTable:
     def __init__(self):
-        self.scopes = [{}]
+        self.stack = [{}]
         self.in_loop = False
         self.in_function = False
 
-    def enter_scope(self):
-        self.scopes.append({})
+    def append_stack(self):
+        self.stack.append({})
 
-    def exit_scope(self):
-        self.scopes.pop()
+    def pop_stack(self):
+        self.stack.pop()
 
     def define(self, name, type_, line, col):
-        if name in self.scopes[-1]:
+        if name in self.stack[-1]:
             return False
-        self.scopes[-1][name] = Symbol(name, type_, line, col)
+        self.stack[-1][name] = CodeObject(name, type_, line, col)
         return True
 
-    def lookup(self, name):
-        for scope in reversed(self.scopes):
-            if name in scope:
-                return scope[name]
+    def find_code_obj(self, name):
+        for code_obj in reversed(self.stack):
+            if name in code_obj:
+                return code_obj[name]
         return None
 
 
-class SemanticAnalyzer:
+class SemanticAnalizator:
     def __init__(self):
-        self.symbols = SymbolTable()
+        self.symbols = CodeObjectsTable()
         self.errors = []
 
     def error(self, message, line, col):
@@ -70,14 +70,14 @@ class SemanticAnalyzer:
     def visit_AssignNode(self, node):
         self.visit(node.value)
 
-        sym = self.symbols.lookup(node.name)
+        sym = self.symbols.find_code_obj(node.name)
         if sym is None:
             var_type = self.get_expr_type(node.value)
             self.symbols.define(node.name, var_type, node.line, node.col)
 
     def visit_AtomNode(self, node):
         if node.type == "name":
-            sym = self.symbols.lookup(node.value)
+            sym = self.symbols.find_code_obj(node.value)
             if sym is None:
                 self.error(f"Variable '{node.value}' not defined", node.line, node.col)
 
@@ -92,11 +92,11 @@ class SemanticAnalyzer:
     def visit_FunStmtNode(self, node):
         self.symbols.define(node.name, "function", node.line, node.col)
 
-        sym = self.symbols.lookup(node.name)
+        sym = self.symbols.find_code_obj(node.name)
         if sym:
             sym.num_params = len(node.params.params) if node.params else 0
 
-        self.symbols.enter_scope()
+        self.symbols.append_stack()
         self.symbols.in_function = True
 
         if node.params:
@@ -106,7 +106,7 @@ class SemanticAnalyzer:
         if node.block:
             self.visit(node.block)
 
-        self.symbols.exit_scope()
+        self.symbols.pop_stack()
         self.symbols.in_function = False
 
     def visit_WhileStmtNode(self, node):
@@ -126,13 +126,13 @@ class SemanticAnalyzer:
         self.visit(node.start)
         self.visit(node.end)
 
-        self.symbols.enter_scope()
+        self.symbols.append_stack()
         self.symbols.define(node.name, "number", node.line, node.col)
 
         for stmt in node.statements:
             self.visit(stmt)
 
-        self.symbols.exit_scope()
+        self.symbols.pop_stack()
         self.symbols.in_loop = old_in_loop
 
     def visit_BreakStmtNode(self, node):
@@ -150,7 +150,7 @@ class SemanticAnalyzer:
             self.visit(node.expr)
 
     def visit_CallFunNode(self, node):
-        sym = self.symbols.lookup(node.name)
+        sym = self.symbols.find_code_obj(node.name)
         if sym is None:
             self.error(f"Function '{node.name}' not defined", node.line, node.col)
             return node
@@ -182,7 +182,7 @@ class SemanticAnalyzer:
                     return "boolean"
                 return "nil"
             if node.type == "name":
-                sym = self.symbols.lookup(node.value)
+                sym = self.symbols.find_code_obj(node.value)
                 return sym.type if sym else "unknown"
 
         if node_name in ("AddExprNode", "MulExprNode"):

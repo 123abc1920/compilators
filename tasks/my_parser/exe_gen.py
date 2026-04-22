@@ -10,7 +10,7 @@ class CodeGen:
         self.declared_vars = set()
         self.functions = []
 
-    def emit(self, line):
+    def add_code_line(self, line):
         self.code.append("    " * self.indent + line)
 
     def _is_string_expr(self, node):
@@ -22,7 +22,7 @@ class CodeGen:
             return self._is_string_expr(node.left) or self._is_string_expr(node.right)
         return False
 
-    def generate(self, node):
+    def generate_code(self, node):
         self.all_vars = set()
         self.string_vars = set()
         self.array_vars = set()
@@ -32,39 +32,39 @@ class CodeGen:
 
         self.collect_vars(node)
 
-        self.emit("#include <stdio.h>")
-        self.emit("#include <stdlib.h>")
-        self.emit("#include <string.h>")
-        self.emit("")
+        self.add_code_line("#include <stdio.h>")
+        self.add_code_line("#include <stdlib.h>")
+        self.add_code_line("#include <string.h>")
+        self.add_code_line("")
 
         for func_name in self.functions:
-            self.emit(f"int {func_name}(int a, int b);")
+            self.add_code_line(f"int {func_name}(int a, int b);")
         if self.functions:
-            self.emit("")
+            self.add_code_line("")
 
-        self.emit("int main() {")
+        self.add_code_line("int main() {")
         self.indent += 1
 
         for var in sorted(self.all_vars):
             if var in self.array_vars:
                 size = self.array_sizes.get(var, 100)
-                self.emit(f"int {var}[{size}];")
+                self.add_code_line(f"int {var}[{size}];")
             elif var in self.string_vars:
-                self.emit(f"char {var}[100];")
+                self.add_code_line(f"char {var}[100];")
             else:
-                self.emit(f"int {var};")
+                self.add_code_line(f"int {var};")
         if self.all_vars:
-            self.emit("")
+            self.add_code_line("")
 
         self.declared_vars = self.all_vars.copy()
 
         self.visit(node)
 
-        self.emit("return 0;")
+        self.add_code_line("return 0;")
         self.indent -= 1
-        self.emit("}")
+        self.add_code_line("}")
 
-        self.emit("")
+        self.add_code_line("")
         self.generate_functions(node)
 
         return "\n".join(self.code)
@@ -157,17 +157,17 @@ class CodeGen:
         value = self.expr_to_str(node.value)
 
         if node.value.__class__.__name__ == "ReadStmtNode":
-            self.emit(f"strcpy({node.name}, {value});")
+            self.add_code_line(f"strcpy({node.name}, {value});")
         elif node.value.__class__.__name__ == "TableNode":
             elements = node.value.elements
             for i, elem in enumerate(elements):
                 val = self.expr_to_str(elem.value)
-                self.emit(f"{node.name}[{i}] = {val};")
+                self.add_code_line(f"{node.name}[{i}] = {val};")
         elif node.name in self.string_vars:
             # Если переменная строка - используем strcpy
-            self.emit(f"strcpy({node.name}, {value});")
+            self.add_code_line(f"strcpy({node.name}, {value});")
         else:
-            self.emit(f"{node.name} = {value};")
+            self.add_code_line(f"{node.name} = {value};")
 
     def gen_PrintStmtNode(self, node):
         if node.args:
@@ -178,79 +178,79 @@ class CodeGen:
                     and arg.type == "name"
                     and arg.value in self.string_vars
                 ):
-                    self.emit(f'printf("%s\\n", {val});')
+                    self.add_code_line(f'printf("%s\\n", {val});')
                 else:
-                    self.emit(f'printf("%d\\n", {val});')
+                    self.add_code_line(f'printf("%d\\n", {val});')
         else:
-            self.emit('printf("\\n");')
+            self.add_code_line('printf("\\n");')
 
     def gen_ReadStmtNode(self, node):
         temp_var = f"read_temp_{self.temp_count}"
         self.temp_count += 1
 
-        self.emit(f"char {temp_var}[100];")
-        self.emit(f"fgets({temp_var}, 100, stdin);")
-        self.emit(f'{temp_var}[strcspn({temp_var}, "\\n")] = 0;')
+        self.add_code_line(f"char {temp_var}[100];")
+        self.add_code_line(f"fgets({temp_var}, 100, stdin);")
+        self.add_code_line(f'{temp_var}[strcspn({temp_var}, "\\n")] = 0;')
 
         return temp_var
 
     def gen_WhileStmtNode(self, node):
         cond = self.expr_to_str(node.condition)
-        self.emit(f"while ({cond}) {{")
+        self.add_code_line(f"while ({cond}) {{")
         self.indent += 1
         for stmt in node.statements:
             self.visit(stmt)
         self.indent -= 1
-        self.emit("}")
+        self.add_code_line("}")
 
     def gen_ForStmtNode(self, node):
         start = self.expr_to_str(node.start)
         end = self.expr_to_str(node.end)
-        self.emit(f"for ({node.name} = {start}; {node.name} < {end}; {node.name}++) {{")
+        self.add_code_line(f"for ({node.name} = {start}; {node.name} < {end}; {node.name}++) {{")
         self.indent += 1
         for stmt in node.statements:
             self.visit(stmt)
         self.indent -= 1
-        self.emit("}")
+        self.add_code_line("}")
 
     def gen_IfStmtNode(self, node):
         for i, cond in enumerate(node.conditions):
             cond_str = self.expr_to_str(cond)
             if i == 0:
-                self.emit(f"if ({cond_str}) {{")
+                self.add_code_line(f"if ({cond_str}) {{")
             else:
-                self.emit(f"}} else if ({cond_str}) {{")
+                self.add_code_line(f"}} else if ({cond_str}) {{")
             self.indent += 1
             for stmt in node.blocks[i].statements:
                 self.visit(stmt)
             self.indent -= 1
 
         if len(node.blocks) > len(node.conditions):
-            self.emit("} else {")
+            self.add_code_line("} else {")
             self.indent += 1
             for stmt in node.blocks[-1].statements:
                 self.visit(stmt)
             self.indent -= 1
-        self.emit("}")
+        self.add_code_line("}")
 
     def gen_BreakStmtNode(self, node):
-        self.emit("break;")
+        self.add_code_line("break;")
 
     def gen_ContinueStmtNode(self, node):
-        self.emit("continue;")
+        self.add_code_line("continue;")
 
     def gen_ReturnStmtNode(self, node):
         if node.expr:
-            self.emit(f"return {self.expr_to_str(node.expr)};")
+            self.add_code_line(f"return {self.expr_to_str(node.expr)};")
         else:
-            self.emit("return;")
+            self.add_code_line("return;")
 
     def gen_FunStmtNode_body(self, node):
         params = []
         if node.params:
             params = node.params.params
         param_str = ", ".join([f"int {p}" for p in params])
-        self.emit(f"int {node.name}({param_str}) {{")
+        self.add_code_line(f"int {node.name}({param_str}) {{")
         self.indent += 1
         if node.block:
             old_vars = self.declared_vars.copy()
@@ -260,7 +260,7 @@ class CodeGen:
             self.visit(node.block)
             self.declared_vars = old_vars
         self.indent -= 1
-        self.emit("}")
+        self.add_code_line("}")
 
     def gen_FunStmtNode(self, node):
         pass
@@ -307,20 +307,20 @@ class CodeGen:
                 if not left.startswith('"'):
                     temp_left = f"temp_str_{self.temp_count}"
                     self.temp_count += 1
-                    self.emit(f"char {temp_left}[100];")
-                    self.emit(f'sprintf({temp_left}, "%d", {left});')
+                    self.add_code_line(f"char {temp_left}[100];")
+                    self.add_code_line(f'sprintf({temp_left}, "%d", {left});')
                     left = temp_left
                 if not right.startswith('"'):
                     temp_right = f"temp_str_{self.temp_count}"
                     self.temp_count += 1
-                    self.emit(f"char {temp_right}[100];")
-                    self.emit(f'sprintf({temp_right}, "%d", {right});')
+                    self.add_code_line(f"char {temp_right}[100];")
+                    self.add_code_line(f'sprintf({temp_right}, "%d", {right});')
                     right = temp_right
 
                 result_var = f"concat_{self.temp_count}"
                 self.temp_count += 1
-                self.emit(f"char {result_var}[200];")
-                self.emit(f'sprintf({result_var}, "%s%s", {left}, {right});')
+                self.add_code_line(f"char {result_var}[200];")
+                self.add_code_line(f'sprintf({result_var}, "%s%s", {left}, {right});')
                 return result_var
             else:
                 return f"({left} + {right})"

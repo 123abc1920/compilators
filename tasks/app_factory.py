@@ -51,7 +51,7 @@ class WithAntlr:
 from my_parser.lexer import Lexer
 from my_parser.parser import Parser
 from my_parser.lua_not_antlr_inter import Compilator
-from my_parser.semantic import SemanticAnalyzer, ASTModifier
+from my_parser.semantic import SemanticAnalizator, ASTModifier
 from my_parser.ast_lua import ast_to_tuple
 from my_parser.nodes import tree_to_string
 
@@ -64,7 +64,7 @@ class WithoutAntlr:
         parser = Parser(tokens)
         ast = parser.parse()
 
-        analyzer = SemanticAnalyzer()
+        analyzer = SemanticAnalizator()
         errors = analyzer.analyze(ast)
 
         if errors:
@@ -99,7 +99,7 @@ class WithoutAntlr:
         from my_parser.exe_gen import CodeGen
 
         generator = CodeGen()
-        c_code = generator.generate(modified_ast)
+        c_code = generator.generate_code(modified_ast)
 
         with open("output.c", "w", encoding="utf-8") as f:
             f.write(c_code)
