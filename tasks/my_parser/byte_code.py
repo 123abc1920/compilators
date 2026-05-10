@@ -26,6 +26,7 @@ class Cmds:
     PRINT = 60
     READ = 61
     MAKE_TABLE = 70
+    TABLE_GET = 71
     HALT = 99
 
 
@@ -98,6 +99,10 @@ class BytecodeCreator:
         for stmt in node.statements:
             self._generate(stmt)
 
+    def gen_BlockNode(self, node):
+        for stmt in node.statements:
+            self._generate(stmt)
+
     def gen_AssignNode(self, node):
         self._generate(node.value)
         self.bytecode.append(Cmds.STORE)
@@ -124,10 +129,16 @@ class BytecodeCreator:
             elif node.value == "nil":
                 self.bytecode.append(Cmds.PUSH)
                 self.bytecode.append(None)
+        elif node.type == "index":
+            table_name, index_node = node.value
+            self._generate(index_node)
+            self.bytecode.append(Cmds.LOAD)
+            self.bytecode.append(table_name)
+            self.bytecode.append(Cmds.TABLE_GET)
 
     def gen_PrintStmtNode(self, node):
         if node.args and node.args.args:
-            for arg in reversed(node.args.args):
+            for arg in node.args.args:
                 self._generate(arg)
             self.bytecode.append(Cmds.PRINT)
             self.bytecode.append(len(node.args.args))
@@ -139,11 +150,11 @@ class BytecodeCreator:
         self._generate(node.left)
         self._generate(node.right)
         ops = {
-            "+": Cmds.ADD,
-            "-": Cmds.SUB,
-            "*": Cmds.MUL,
-            "/": Cmds.DIV,
-            "%": Cmds.MOD,
+            '+': Cmds.ADD,
+            '-': Cmds.SUB,
+            '*': Cmds.MUL,
+            '/': Cmds.DIV,
+            '%': Cmds.MOD,
         }
         self.bytecode.append(ops.get(node.op, Cmds.ADD))
 
@@ -207,11 +218,11 @@ class BytecodeCreator:
             self.bytecode.append(skip_lbl)
             self.labels[else_lbl] = len(self.bytecode)
             end_labels.append(skip_lbl)
-
+        
         if len(node.blocks) > len(node.conditions):
             for stmt in node.blocks[-1].statements:
                 self._generate(stmt)
-
+        
         for lbl in end_labels:
             self.labels[lbl] = len(self.bytecode)
 
@@ -250,21 +261,21 @@ class BytecodeCreator:
         self._generate(node.start)
         self.bytecode.append(Cmds.STORE)
         self.bytecode.append(node.name)
-
+        
         self._generate(node.end)
         limit_var = f"__limit_{node.name}"
         self.bytecode.append(Cmds.STORE)
         self.bytecode.append(limit_var)
-
+        
         self.bytecode.append(Cmds.PUSH)
         self.bytecode.append(1)
         step_var = f"__step_{node.name}"
         self.bytecode.append(Cmds.STORE)
         self.bytecode.append(step_var)
-
+        
         start_label = self._new_label()
         self.labels[start_label] = len(self.bytecode)
-
+        
         self.bytecode.append(Cmds.LOAD)
         self.bytecode.append(node.name)
         self.bytecode.append(Cmds.LOAD)
@@ -273,18 +284,18 @@ class BytecodeCreator:
         end_label = self._new_label()
         self.bytecode.append(Cmds.JMP_IF_NOT)
         self.bytecode.append(end_label)
-
+        
         old_break = self.current_break
         old_continue = self.current_continue
         self.current_break = end_label
         self.current_continue = start_label
-
+        
         for stmt in node.statements:
             self._generate(stmt)
-
+        
         self.current_break = old_break
         self.current_continue = old_continue
-
+        
         self.bytecode.append(Cmds.LOAD)
         self.bytecode.append(node.name)
         self.bytecode.append(Cmds.LOAD)
@@ -292,7 +303,7 @@ class BytecodeCreator:
         self.bytecode.append(Cmds.ADD)
         self.bytecode.append(Cmds.STORE)
         self.bytecode.append(node.name)
-
+        
         self.bytecode.append(Cmds.JMP)
         self.bytecode.append(start_label)
         self.labels[end_label] = len(self.bytecode)
@@ -330,7 +341,7 @@ class BytecodeCreator:
         self.bytecode.append(Cmds.RET)
 
     def gen_TableNode(self, node):
-        for el in reversed(node.elements):
+        for el in node.elements:
             self._generate(el.value)
         self.bytecode.append(Cmds.MAKE_TABLE)
         self.bytecode.append(len(node.elements))
@@ -345,3 +356,7 @@ class BytecodeCreator:
     def gen_ArgListNode(self, node):
         for arg in node.args:
             self._generate(arg)
+
+    def gen_CastNode(self, node):
+        self._generate(node.expr)
+

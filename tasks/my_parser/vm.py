@@ -1,5 +1,6 @@
 from my_parser.byte_code import BytecodeCreator, Cmds
 
+
 class VM:
     def __init__(self, bytecode, constants=None, functions=None):
         self.bytecode = bytecode
@@ -9,8 +10,6 @@ class VM:
         self.stack = []
         self.call_stack = [{}]
         self.running = True
-        self.current_break = None
-        self.current_continue = None
 
     def _execute(self, bytecode, constants, return_to_stack=True):
         saved_pc = self.pc
@@ -45,6 +44,14 @@ class VM:
                 self.pc += 1
                 if self.stack:
                     self.call_stack[-1][name] = self.stack.pop()
+
+            elif op == Cmds.TABLE_GET:
+                table = self.stack.pop()
+                index = self.stack.pop()
+                if isinstance(table, list) and isinstance(index, (int, float)):
+                    idx = int(index) - 1
+                    if 0 <= idx < len(table):
+                        self.stack.append(table[idx])
 
             elif op == Cmds.ADD:
                 b = self.stack.pop()
@@ -187,7 +194,6 @@ class VM:
                 for _ in range(cnt):
                     if self.stack:
                         values.append(self.stack.pop())
-                values.reverse()
                 print(" ".join(str(v) for v in values))
 
             elif op == Cmds.READ:
