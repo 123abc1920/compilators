@@ -139,11 +139,11 @@ class BytecodeCreator:
         self._generate(node.left)
         self._generate(node.right)
         ops = {
-            '+': Cmds.ADD,
-            '-': Cmds.SUB,
-            '*': Cmds.MUL,
-            '/': Cmds.DIV,
-            '%': Cmds.MOD,
+            "+": Cmds.ADD,
+            "-": Cmds.SUB,
+            "*": Cmds.MUL,
+            "/": Cmds.DIV,
+            "%": Cmds.MOD,
         }
         self.bytecode.append(ops.get(node.op, Cmds.ADD))
 
@@ -207,11 +207,11 @@ class BytecodeCreator:
             self.bytecode.append(skip_lbl)
             self.labels[else_lbl] = len(self.bytecode)
             end_labels.append(skip_lbl)
-        
+
         if len(node.blocks) > len(node.conditions):
             for stmt in node.blocks[-1].statements:
                 self._generate(stmt)
-        
+
         for lbl in end_labels:
             self.labels[lbl] = len(self.bytecode)
 
@@ -250,46 +250,52 @@ class BytecodeCreator:
         self._generate(node.start)
         self.bytecode.append(Cmds.STORE)
         self.bytecode.append(node.name)
-        
+
         self._generate(node.end)
         limit_var = f"__limit_{node.name}"
         self.bytecode.append(Cmds.STORE)
         self.bytecode.append(limit_var)
-        
-        start = self._new_label()
-        self.labels[start] = len(self.bytecode)
-        
+
+        self.bytecode.append(Cmds.PUSH)
+        self.bytecode.append(1)
+        step_var = f"__step_{node.name}"
+        self.bytecode.append(Cmds.STORE)
+        self.bytecode.append(step_var)
+
+        start_label = self._new_label()
+        self.labels[start_label] = len(self.bytecode)
+
         self.bytecode.append(Cmds.LOAD)
         self.bytecode.append(node.name)
         self.bytecode.append(Cmds.LOAD)
         self.bytecode.append(limit_var)
         self.bytecode.append(Cmds.LTE)
-        end = self._new_label()
+        end_label = self._new_label()
         self.bytecode.append(Cmds.JMP_IF_NOT)
-        self.bytecode.append(end)
-        
+        self.bytecode.append(end_label)
+
         old_break = self.current_break
         old_continue = self.current_continue
-        self.current_break = end
-        self.current_continue = start
-        
+        self.current_break = end_label
+        self.current_continue = start_label
+
         for stmt in node.statements:
             self._generate(stmt)
-        
+
         self.current_break = old_break
         self.current_continue = old_continue
-        
+
         self.bytecode.append(Cmds.LOAD)
         self.bytecode.append(node.name)
-        self.bytecode.append(Cmds.PUSH)
-        self.bytecode.append(1)
+        self.bytecode.append(Cmds.LOAD)
+        self.bytecode.append(step_var)
         self.bytecode.append(Cmds.ADD)
         self.bytecode.append(Cmds.STORE)
         self.bytecode.append(node.name)
-        
+
         self.bytecode.append(Cmds.JMP)
-        self.bytecode.append(start)
-        self.labels[end] = len(self.bytecode)
+        self.bytecode.append(start_label)
+        self.labels[end_label] = len(self.bytecode)
 
     def gen_BreakStmtNode(self, node):
         if self.current_break is not None:
