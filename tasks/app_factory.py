@@ -86,19 +86,10 @@ class WithoutAntlr:
 
         self.generate_exe(modified_ast)
 
-        bytecode_creator = BytecodeCreator()
-        bytecode = bytecode_creator.compile(modified_ast)
+        compiler = BytecodeCreator()
+        bytecode, constants, functions = compiler.compile(modified_ast)
         
-        creator = BytecodeCreator()
-        bytecode, constants = creator.compile(modified_ast)
-
-        print("\n=== Байт-код ===")
-        print(bytecode)
-        print("\n=== Константы ===")
-        print(constants)
-
-        print("\n=== Выполнение на VM ===\n")
-        vm = VM(bytecode, constants)
+        vm = VM(bytecode, constants, functions)
         vm.run()
 
         return True
