@@ -280,7 +280,7 @@ class BytecodeCreator:
         self.bytecode.append(node.name)
         self.bytecode.append(Cmds.LOAD)
         self.bytecode.append(limit_var)
-        self.bytecode.append(Cmds.LTE)
+        self.bytecode.append(Cmds.LT)
         end_label = self._new_label()
         self.bytecode.append(Cmds.JMP_IF_NOT)
         self.bytecode.append(end_label)
