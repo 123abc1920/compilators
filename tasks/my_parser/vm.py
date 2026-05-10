@@ -274,7 +274,9 @@ class VM:
                             if self.stack:
                                 values.append(self.stack.pop())
                         values.reverse()
-                        print(" ".join(str(v) for v in values))
+                        print(" ".join(str(v) for v in values), end="")
+                        if values:
+                            print()
                     elif sub_op == Cmds.READ:
                         val = input()
                         try:
@@ -311,7 +313,9 @@ class VM:
                     if self.stack:
                         values.append(self.stack.pop())
                 values.reverse()
-                print(" ".join(str(v) for v in values))
+                print(" ".join(str(v) for v in values), end="")
+                if values:
+                    print()
 
             elif op == Cmds.READ:
                 val = input()
