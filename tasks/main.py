@@ -11,6 +11,7 @@ def read_code():
 
     return code
 
+# документация в git и компилятор под простую вирт машину и вирт машину это на 3 атт
 
 def main():
     code = read_code()

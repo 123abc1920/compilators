@@ -54,6 +54,8 @@ from my_parser.lua_not_antlr_inter import Compilator
 from my_parser.semantic import SemanticAnalizator, ASTModifier
 from my_parser.ast_lua import ast_to_tuple
 from my_parser.nodes import tree_to_string
+from my_parser.byte_code import BytecodeCreator
+from my_parser.vm import VM
 
 
 class WithoutAntlr:
@@ -83,6 +85,21 @@ class WithoutAntlr:
         self.print_ast_tree(modified_ast)
 
         self.generate_exe(modified_ast)
+
+        bytecode_creator = BytecodeCreator()
+        bytecode = bytecode_creator.compile(modified_ast)
+        
+        creator = BytecodeCreator()
+        bytecode, constants = creator.compile(modified_ast)
+
+        print("\n=== Байт-код ===")
+        print(bytecode)
+        print("\n=== Константы ===")
+        print(constants)
+
+        print("\n=== Выполнение на VM ===\n")
+        vm = VM(bytecode, constants)
+        vm.run()
 
         return True
 
