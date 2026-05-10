@@ -326,7 +326,7 @@ class BytecodeCreator:
 
     def gen_CallFunNode(self, node):
         if node.args and node.args.args:
-            for arg in node.args.args:
+            for arg in reversed(node.args.args):
                 self._generate(arg)
         self.bytecode.append(Cmds.CALL)
         self.bytecode.append(node.name)

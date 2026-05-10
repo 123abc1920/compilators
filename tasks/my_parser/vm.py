@@ -174,8 +174,12 @@ class VM:
                 bc_creator = BytecodeCreator()
                 func_bytecode, func_constants, _ = bc_creator.compile(func["block"])
 
-                self._execute(func_bytecode, func_constants, return_to_stack=True)
-                ret_val = self.stack.pop() if self.stack else None
+                ret_val = self._execute(func_bytecode, func_constants, return_to_stack=False)
+
+                self.call_stack.pop()
+                
+                if ret_val is not None:
+                    self.stack.append(ret_val)
 
             elif op == Cmds.RET:
                 if self.stack:
@@ -183,8 +187,6 @@ class VM:
                 self.bytecode = saved_bytecode
                 self.constants = saved_constants
                 self.pc = saved_pc
-                if return_to_stack:
-                    self.stack.append(ret_val)
                 return ret_val
 
             elif op == Cmds.PRINT:
