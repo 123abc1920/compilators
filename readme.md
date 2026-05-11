@@ -1,3 +1,16 @@
+# 📚 Оглавление
+
+- [main.py](#mainpy)
+- [app_factory.py](#app_factorypy)
+- [Lexer](#lexer)
+- [Parser](#parser)
+- [Semantic Analyzer](#общее-понятие-семантический-анализ)
+- [ASTModifier](#класс-astmodifier--модификация-дерева)
+- [Compilator](#compilator)
+- [CodeGen](#что-такое-codegen-генератор-кода)
+- [BytecodeCreator](#что-такое-байткод-и-генератор-байткода)
+- [VM](#что-такое-виртуальная-машина-vm)
+
 ### `main.py`
 
 **Точка входа в приложение** — выполняет следующие действия:
