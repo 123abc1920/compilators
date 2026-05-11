@@ -1,4 +1,4 @@
-# 📚 Оглавление
+# Оглавление
 
 - [main.py](#mainpy)
 - [app_factory.py](#app_factorypy)
